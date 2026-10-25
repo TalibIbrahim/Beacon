@@ -1,0 +1,21 @@
+# Oracle Cloud Infrastructure (OCI) Credentials
+OCI_TENANCY_OCID=<your-tenancy-ocid>
+OCI_USER_OCID=<your-user-ocid>
+OCI_FINGERPRINT=00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+# Base64 string of the private key (PKCS#8 format: openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out key_pkcs8.pem)
+OCI_PRIVATE_KEY_B64=<your-base64-encoded-pkcs8-private-key>
+OCI_REGION=us-ashburn-1
+OCI_INSTANCE_OCID=<your-instance-ocid>
+OCI_COMPARTMENT_OCID=<your-compartment-ocid>
+
+# Authentication & Security
+# Generated using: npm run hash-password "your-strong-password"
+PASSWORD_HASH=pbkdf2$100000$<salt>$<hash>
+# Random 32+ character secret for HMAC session signing
+SESSION_SECRET=change-this-to-a-very-secure-random-secret-string-at-least-32-chars
+
+# Oracle Cloud Free Trial End Date (ISO 8601 UTC string)
+TRIAL_END=2099-12-31T00:00:00Z
+
+# Backup download URL (Optional - e.g. Oracle Pre-Authenticated Request URL)
+BACKUP_URL=<your-backup-url>

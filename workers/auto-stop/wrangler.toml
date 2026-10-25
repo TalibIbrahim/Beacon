@@ -1,0 +1,15 @@
+name = "beacon-auto-stop"
+main = "src/index.ts"
+compatibility_date = "2024-04-01"
+
+[triggers]
+crons = ["*/10 * * * *"]
+
+# Cloudflare KV binding (same namespace as the dashboard)
+[[kv_namespaces]]
+binding = "DASH_KV"
+id = "DASH_KV_ID_PLACEHOLDER"
+
+[vars]
+OCI_REGION = "me-dubai-1"
+AUTO_STOP_MINUTES = "30"

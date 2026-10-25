@@ -1,0 +1,27 @@
+# Environment variables and secrets
+.dev.vars
+*.pem
+*.key
+*.env
+*.env.*
+
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Cloudflare Wrangler
+.wrangler/
+
+# System and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# AI Agent skills and harnesses
+.agent/
+.claude/
+.cursor/
+.gemini/

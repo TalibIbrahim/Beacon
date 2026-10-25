@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "beacon",
+  "compatibility_date": "2024-04-01",
+  "main": "dist/worker-build/index.js",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "keep_vars": true,
+  "kv_namespaces": [
+    {
+      "binding": "DASH_KV",
+      "id": "ea5e590c0bd749b0acd7fe941cc9b706"
+    }
+  ]
+}
