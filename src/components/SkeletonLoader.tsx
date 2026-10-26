@@ -1,54 +1,43 @@
 import React from 'react';
 
-export const SkeletonLoader: React.FC = () => {
-  return (
-    <div className="space-y-6 animate-pulse">
-      {/* Trial banner skeleton */}
-      <div className="h-12 bg-surface-card rounded-xl border border-white/[0.04]" />
+// The final layout with flat bars where values will land, so nothing shifts when data arrives
+const Bar: React.FC<{ className: string }> = ({ className }) => (
+  <div className={`rounded bg-raised ${className}`} aria-hidden="true" />
+);
 
-      {/* Server Status skeleton */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/[0.06] space-y-5">
-        <div className="flex justify-between items-center pb-4 border-b border-white/[0.04]">
-          <div className="space-y-2">
-            <div className="h-3 w-28 bg-white/[0.05] rounded" />
-            <div className="h-6 w-48 bg-white/[0.08] rounded" />
-          </div>
-          <div className="flex gap-2">
-            <div className="h-8 w-28 bg-white/[0.05] rounded-xl" />
-            <div className="h-8 w-32 bg-white/[0.05] rounded-xl" />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="h-20 bg-surface-card rounded-xl border border-white/[0.04]" />
-          <div className="h-20 bg-surface-card rounded-xl border border-white/[0.04]" />
-        </div>
-      </div>
-
-      {/* Controls skeleton */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/[0.06] space-y-4">
-        <div className="h-5 w-36 bg-white/[0.08] rounded" />
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="h-14 bg-surface-card rounded-xl border border-white/[0.04]" />
-          <div className="h-14 bg-surface-card rounded-xl border border-white/[0.04]" />
-          <div className="h-14 bg-surface-card rounded-xl border border-white/[0.04]" />
-        </div>
-      </div>
-
-      {/* Players & Activity Grid skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="h-64 glass-panel rounded-2xl border border-white/[0.06] p-6 space-y-4">
-          <div className="h-5 w-32 bg-white/[0.08] rounded" />
-          <div className="h-20 bg-surface-card rounded-xl" />
-          <div className="h-20 bg-surface-card rounded-xl" />
-        </div>
-        <div className="h-64 glass-panel rounded-2xl border border-white/[0.06] p-6 space-y-4">
-          <div className="h-5 w-32 bg-white/[0.08] rounded" />
-          <div className="h-10 bg-surface-card rounded-lg" />
-          <div className="h-10 bg-surface-card rounded-lg" />
-          <div className="h-10 bg-surface-card rounded-lg" />
-        </div>
-      </div>
+const PanelSkeleton: React.FC<{ title: string; rows: number }> = ({ title, rows }) => (
+  <div className="panel">
+    <div className="px-5 pt-4 pb-3 text-base font-semibold text-faint">{title}</div>
+    <div className="px-5 pb-5 space-y-3">
+      {Array.from({ length: rows }, (_, i) => (
+        <Bar key={i} className="h-5 w-full" />
+      ))}
     </div>
-  );
-};
+  </div>
+);
+
+export const SkeletonLoader: React.FC = () => (
+  <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start" aria-busy="true">
+    <span className="sr-only">Loading server status…</span>
+    <div className="flex flex-col gap-6">
+      <div className="panel">
+        <div className="p-6 flex flex-col sm:flex-row sm:justify-between gap-6">
+          <Bar className="h-9 w-40" />
+          <Bar className="h-9 w-64" />
+        </div>
+        <div className="border-t border-line grid grid-cols-4 gap-6 px-6 py-5">
+          <Bar className="h-4" />
+          <Bar className="h-4" />
+          <Bar className="h-4" />
+          <Bar className="h-4" />
+        </div>
+      </div>
+      <PanelSkeleton title="World save" rows={3} />
+      <PanelSkeleton title="Oracle Cloud" rows={4} />
+    </div>
+    <div className="flex flex-col gap-6">
+      <PanelSkeleton title="Players" rows={2} />
+      <PanelSkeleton title="Recent activity" rows={5} />
+    </div>
+  </div>
+);

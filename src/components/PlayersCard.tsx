@@ -1,120 +1,83 @@
 import React from 'react';
-import { User, Info, Terminal, Radio } from 'lucide-react';
+import { Phase } from '../serverState';
 import { PlayerInfo } from '../types';
 
 interface PlayersCardProps {
   players: PlayerInfo;
-  version: string;
-  motd: string;
-  isOnline: boolean;
+  phase: Phase;
 }
 
-export const PlayersCard: React.FC<PlayersCardProps> = ({
-  players,
-  version,
-  motd,
-  isOnline,
-}) => {
-  const percentCapacity =
-    players.max > 0 ? Math.min(100, Math.round((players.online / players.max) * 100)) : 0;
+// A stable hue per name, so each friend keeps the same colour every visit
+function nameHue(name: string): number {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  // 12 hues, 30 degrees apart
+  return (hash % 12) * 30;
+}
 
-  const getCapacityWidthClass = (pct: number) => {
-    if (pct <= 0) return 'w-0';
-    if (pct < 10) return 'w-[8%]';
-    if (pct < 25) return 'w-1/4';
-    if (pct < 50) return 'w-1/2';
-    if (pct < 75) return 'w-3/4';
-    return 'w-full';
-  };
+const EMPTY_COPY: Record<Phase, string> = {
+  online: 'Nobody is on right now.',
+  loading: 'Players can join once the world has loaded.',
+  booting: 'Players can join once the world has loaded.',
+  stopping: 'The server is shutting down.',
+  off: 'Nobody can join while the server is off.',
+  unknown: 'Player list unavailable.',
+};
+
+export const PlayersCard: React.FC<PlayersCardProps> = ({ players, phase }) => {
+  const isOnline = phase === 'online';
+  const names = isOnline ? players.names : [];
+  // mcsrvstat only lists names for some servers; the count is always right
+  const unnamed = isOnline ? Math.max(0, players.online - names.length) : 0;
 
   return (
-    <div className="carbon-panel rounded-2xl p-6 border border-white/[0.08] space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-        <div>
-          <h2 className="text-base font-bold text-white tracking-tight">Active Roster</h2>
-          <p className="text-xs text-neutral-400 mt-0.5">Connected players &amp; runtime parameters</p>
-        </div>
+    <section className="panel" aria-labelledby="players-heading">
+      <header className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
+        <h2 id="players-heading" className="text-base font-semibold">
+          Players
+        </h2>
+        <span className="num text-muted">
+          {isOnline ? (
+            <>
+              <span className="text-ink text-xl font-medium">{players.online}</span>
+              {players.max > 0 && <span> / {players.max}</span>}
+            </>
+          ) : (
+            '—'
+          )}
+        </span>
+      </header>
 
-        <div className="text-right font-mono">
-          <div className="text-xl font-bold text-white tabular-nums">
-            {isOnline ? `${players.online} / ${players.max}` : '0 / 0'}
-          </div>
-          <div className="text-[11px] text-neutral-400">SLOTS FILLED</div>
-        </div>
-      </div>
-
-      {/* Segmented Capacity Bar */}
-      {isOnline && players.max > 0 && (
-        <div className="space-y-1.5">
-          <div className="w-full bg-black/60 rounded-full h-1.5 overflow-hidden border border-white/[0.04]">
-            <div
-              className={`bg-emerald-400 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] ${getCapacityWidthClass(
-                percentCapacity
-              )}`}
-            />
-          </div>
-          <div className="flex justify-between text-[10px] font-mono text-neutral-400">
-            <span>0%</span>
-            <span>CAPACITY: {percentCapacity}%</span>
-            <span>100%</span>
-          </div>
-        </div>
+      {names.length > 0 || unnamed > 0 ? (
+        <ul className="px-5 pb-4">
+          {names.map((name) => {
+            const hue = nameHue(name);
+            return (
+              <li key={name} className="flex items-center gap-3 h-10 border-t border-rule first:border-t-0">
+                <span
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+                  style={{ backgroundColor: `hsl(${hue} 30% 20%)`, color: `hsl(${hue} 70% 80%)` }}
+                  aria-hidden="true"
+                >
+                  {name.charAt(0).toUpperCase()}
+                </span>
+                <span className="truncate">{name}</span>
+              </li>
+            );
+          })}
+          {unnamed > 0 && (
+            <li className="flex items-center h-10 border-t border-rule first:border-t-0 text-muted">
+              {names.length > 0 ? `+${unnamed} more` : `${unnamed} online (names hidden by the server)`}
+            </li>
+          )}
+        </ul>
+      ) : (
+        <p className="mx-5 mb-5 px-3 py-2.5 rounded-card border border-dashed border-line text-muted">
+          {EMPTY_COPY[phase]}
+        </p>
       )}
-
-      {/* Players Radar Roster */}
-      <div>
-        {isOnline && players.names.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {players.names.map((name) => (
-              <div
-                key={name}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl bg-black/40 border border-white/[0.06]"
-              >
-                <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-mono text-xs font-bold shrink-0">
-                  <User className="w-3.5 h-3.5" />
-                </div>
-                <div className="min-w-0 font-mono text-xs text-neutral-200 truncate font-medium">
-                  {name}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-6 rounded-xl bg-black/30 border border-white/[0.04] text-center space-y-1">
-            <Radio className="w-5 h-5 text-neutral-600 mx-auto" />
-            <div className="text-xs font-mono text-neutral-400">
-              {isOnline ? 'NO PLAYERS CURRENTLY CONNECTED' : 'SERVER OFFLINE'}
-            </div>
-            <div className="text-[11px] text-neutral-400">
-              {isOnline ? 'Standing by for incoming connection on 25565' : 'Boot server to enable player entry'}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Engine Telemetry */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-        <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-center gap-3">
-          <Info className="w-4 h-4 text-neutral-400 shrink-0" />
-          <div className="min-w-0 font-mono">
-            <div className="text-[10px] text-neutral-400">ENGINE VERSION</div>
-            <div className="text-xs font-semibold text-neutral-200 truncate">
-              {version || 'Unknown'}
-            </div>
-          </div>
-        </div>
-
-        <div className="p-3.5 rounded-xl bg-black/40 border border-white/[0.06] flex items-start gap-3">
-          <Terminal className="w-4 h-4 text-neutral-400 shrink-0 mt-0.5" />
-          <div className="min-w-0 font-mono">
-            <div className="text-[10px] text-neutral-400">SERVER MOTD</div>
-            <div className="text-xs text-neutral-300 line-clamp-1">
-              {motd || 'No message configured'}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </section>
   );
 };

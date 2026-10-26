@@ -25,3 +25,6 @@ Thumbs.db
 .claude/
 .cursor/
 .gemini/
+
+# Design tooling output
+.taste-skill/

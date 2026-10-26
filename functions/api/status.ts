@@ -4,7 +4,8 @@ import { getRecentActivityLog } from '../_lib/log';
 import { getMinecraftStatus } from '../_lib/mcstatus';
 import { getOciInstanceDetails, getOciPublicIp } from '../_lib/oci';
 import { checkPowerCooldown } from '../_lib/ratelimit';
-import { BackupInfo, Env, MinecraftState, StatusResponse, VmState } from '../_lib/types';
+import { ResolvedBackup, resolveBackup } from '../_lib/backup';
+import { Env, MinecraftState, StatusResponse, VmState } from '../_lib/types';
 
 const ONLINE_SINCE_KEY = 'online_since';
 
@@ -71,61 +72,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 5. Calculate Oracle trial days left
-    let trialDaysLeft = 0;
+    // 5. Days left on the Oracle trial (null when TRIAL_END is not set)
+    let trialDaysLeft: number | null = null;
     if (env.TRIAL_END) {
-      try {
-        const trialEndMs = new Date(env.TRIAL_END).getTime();
-        const diffMs = trialEndMs - Date.now();
-        trialDaysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-      } catch {
-        trialDaysLeft = 0;
+      const trialEndMs = new Date(env.TRIAL_END).getTime();
+      if (!isNaN(trialEndMs)) {
+        trialDaysLeft = Math.max(0, Math.ceil((trialEndMs - Date.now()) / (1000 * 60 * 60 * 24)));
       }
     }
 
-    // 6. Fetch recent activity log
-    const recentLog = await getRecentActivityLog(env.DASH_KV, 20);
-
-    // 7. Check backup archive status
-    let backupInfo: BackupInfo = {
-      available: false,
-      message: 'Configure Oracle Object Storage or start server for direct download.',
-    };
-    if (env.BACKUP_URL) {
-      let downloadUrl = env.BACKUP_URL.trim();
-      if (downloadUrl.endsWith('/')) {
-        downloadUrl = `${downloadUrl}world-latest.tar.gz`;
-      }
-      try {
-        const headRes = await fetch(downloadUrl, { method: 'HEAD' });
-        if (headRes.ok) {
-          const len = headRes.headers.get('content-length');
-          backupInfo = {
-            available: true,
-            filename: 'world-latest.tar.gz',
-            sizeBytes: len ? parseInt(len, 10) : undefined,
-            lastModified: headRes.headers.get('last-modified') || undefined,
-            message: 'Oracle Cloud save archive ready',
-          };
-        } else {
-          backupInfo = {
-            available: false,
-            message: 'Oracle bucket connected. Awaiting world-latest.tar.gz upload from server.',
-          };
-        }
-      } catch {
-        backupInfo = {
-          available: false,
-          message: 'Error probing Oracle Object Storage URL.',
-        };
-      }
-    } else if (publicIp && vmState === 'RUNNING') {
-      backupInfo = {
-        available: true,
-        filename: 'world-latest.tar.gz',
-        message: 'Direct server download ready (Server online)',
-      };
-    }
+    // 6. Recent activity log and world save, in parallel
+    const [recentLog, backup] = await Promise.all([
+      getRecentActivityLog(env.DASH_KV, 20),
+      resolveBackup(env, async () => ({ vmState, publicIp })).catch((err): ResolvedBackup => {
+        console.error('Backup resolution failed:', err instanceof Error ? err.message : err);
+        return { info: { available: false, source: 'none', message: 'Could not check the backup storage.' } };
+      }),
+    ]);
 
     const response: StatusResponse = {
       vmState,
@@ -135,11 +98,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       motd,
       address: publicIp ? `${publicIp}:25565` : '',
       onlineSince,
+      region: env.OCI_REGION || 'me-dubai-1',
       trialDaysLeft,
       recentLog,
       powerCooldownSeconds: powerCooldown.onCooldown ? powerCooldown.remainingSeconds : 0,
       computeUsage,
-      backupInfo,
+      backupInfo: backup.info,
     };
 
     return new Response(JSON.stringify(response), {

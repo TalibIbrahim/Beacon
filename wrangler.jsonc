@@ -14,4 +14,12 @@
       "id": "ea5e590c0bd749b0acd7fe941cc9b706"
     }
   ]
+  // World saves in Cloudflare R2: create the bucket first (npx wrangler r2 bucket create beacon-backups),
+  // then uncomment this (and add a comma after the kv_namespaces block above).
+  // "r2_buckets": [
+  //   {
+  //     "binding": "BACKUP_BUCKET",
+  //     "bucket_name": "beacon-backups"
+  //   }
+  // ]
 }

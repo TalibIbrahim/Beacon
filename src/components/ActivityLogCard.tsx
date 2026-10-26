@@ -1,112 +1,99 @@
-import React from 'react';
-import { Play, Square, RotateCw, Key, AlertCircle, Shield, Download } from 'lucide-react';
+import React, { useState } from 'react';
+import { formatDate, formatRelative } from '../format';
 import { ActivityLogEntry } from '../types';
 
 interface ActivityLogCardProps {
   logs: ActivityLogEntry[];
 }
 
+const VISIBLE_ROWS = 6;
+
+function describe(entry: ActivityLogEntry): string {
+  const auto = entry.actor === 'cron';
+  switch (entry.action) {
+    case 'START':
+      return 'Started the server';
+    case 'STOP':
+      return auto ? 'Auto-stopped the server' : 'Stopped the server';
+    case 'RESTART':
+      return 'Restarted the server';
+    case 'LOGIN':
+      return 'Signed in';
+    case 'FAILED_LOGIN':
+      return 'Wrong password';
+    case 'BACKUP_DOWNLOAD':
+      return 'Downloaded the world save';
+    default:
+      return entry.action;
+  }
+}
+
 export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
-  const formatTime = (isoString: string) => {
-    try {
-      const date = new Date(isoString);
-      const now = new Date();
-      const diffMs = now.getTime() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
-      const diffHours = Math.floor(diffMins / 60);
-
-      if (diffMins < 1) return 'Just now';
-      if (diffMins < 60) return `${diffMins}m ago`;
-      if (diffHours < 24) return `${diffHours}h ago`;
-
-      return date.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return isoString;
-    }
-  };
-
-  const getActionIcon = (action: string) => {
-    switch (action) {
-      case 'START':
-        return <Play className="w-3 h-3 text-emerald-400" />;
-      case 'STOP':
-        return <Square className="w-3 h-3 text-rose-400" />;
-      case 'RESTART':
-        return <RotateCw className="w-3 h-3 text-amber-400" />;
-      case 'LOGIN':
-        return <Key className="w-3 h-3 text-blue-400" />;
-      case 'BACKUP_DOWNLOAD':
-        return <Download className="w-3 h-3 text-cyan-400" />;
-      default:
-        return <AlertCircle className="w-3 h-3 text-neutral-400" />;
-    }
-  };
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? logs : logs.slice(0, VISIBLE_ROWS);
 
   return (
-    <div className="carbon-panel rounded-2xl p-6 border border-white/[0.08] space-y-4">
-      <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-        <div>
-          <h2 className="text-base font-bold text-white tracking-tight">Audit Stream</h2>
-          <p className="text-xs text-neutral-400 mt-0.5">Flight recorder of all control events</p>
-        </div>
-
-        <div className="text-[11px] font-mono text-neutral-400">
-          LAST {logs.length} ENTRIES
-        </div>
-      </div>
+    <section className="panel" aria-labelledby="activity-heading">
+      <header className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
+        <h2 id="activity-heading" className="text-base font-semibold">
+          Recent activity
+        </h2>
+        {logs.length > VISIBLE_ROWS && (
+          <button
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+            className="text-muted hover:text-ink transition-colors"
+            aria-expanded={showAll}
+          >
+            {showAll ? 'Show less' : `Show all ${logs.length}`}
+          </button>
+        )}
+      </header>
 
       {logs.length === 0 ? (
-        <div className="p-8 text-center text-xs font-mono text-neutral-400 italic">
-          No audit entries recorded in KV.
-        </div>
+        <p className="mx-5 mb-5 px-3 py-2.5 rounded-card border border-dashed border-line text-muted">
+          Nothing has happened yet. Starts, stops, sign-ins and downloads show up here.
+        </p>
       ) : (
-        <div className="divide-y divide-white/[0.03] max-h-72 overflow-y-auto pr-1 font-mono">
-          {logs.map((entry) => (
-            <div
-              key={entry.id}
-              className="py-2.5 flex items-center justify-between gap-3 text-xs"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="p-1 rounded bg-black/60 border border-white/[0.06] shrink-0">
-                  {getActionIcon(entry.action)}
+        <ul className="px-5 pb-2">
+          {visible.map((entry) => {
+            const failed = entry.result === 'FAILED';
+            const isLoginFailure = entry.action === 'FAILED_LOGIN';
+            const who = entry.actor === 'cron' ? 'Auto-stop' : entry.actor;
+            // The worker writes "Auto-stopped after 30m idle…"; the row title already says it
+            const details = entry.details?.replace(/^Auto-stopped\s+/i, '');
+            return (
+              <li key={entry.id} className="flex items-start justify-between gap-3 py-2.5 border-t border-rule first:border-t-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{describe(entry)}</span>
+                    {failed && !isLoginFailure && (
+                      <span className="flex-none h-5 px-2 inline-flex items-center rounded-full bg-pill-negative text-negative text-xs">
+                        Failed
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 text-xs text-faint truncate">
+                    <span className={entry.actor === 'cron' ? '' : 'font-mono'}>{who}</span>
+                    {details && <span> · {details}</span>}
+                  </div>
                 </div>
-
-                <div className="min-w-0 flex items-center gap-2">
-                  <span className="font-semibold text-neutral-200">
-                    {entry.action}
-                  </span>
-                  <span
-                    className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-bold ${
-                      entry.result === 'SUCCESS'
-                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                    }`}
-                  >
-                    {entry.result}
-                  </span>
-                  <span className="text-[11px] text-neutral-400 truncate">
-                    #{entry.actor}
-                  </span>
-                </div>
-              </div>
-
-              <div className="shrink-0 text-right text-[11px] text-neutral-400 tabular-nums">
-                {formatTime(entry.timestamp)}
-              </div>
-            </div>
-          ))}
-        </div>
+                <time
+                  dateTime={entry.timestamp}
+                  title={formatDate(entry.timestamp)}
+                  className={`shrink-0 num text-sm ${isLoginFailure ? 'text-negative' : 'text-muted'}`}
+                >
+                  {formatRelative(entry.timestamp)}
+                </time>
+              </li>
+            );
+          })}
+        </ul>
       )}
 
-      <div className="flex items-center gap-2 text-[11px] font-mono text-neutral-400 pt-1">
-        <Shield className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-        <span>Origin IPs are SHA-256 masked for privacy and security.</span>
-      </div>
-    </div>
+      <p className="px-5 py-3 border-t border-line text-xs text-faint">
+        Visitors show as a short hash of their IP address.
+      </p>
+    </section>
   );
 };

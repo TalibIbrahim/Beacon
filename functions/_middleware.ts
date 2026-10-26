@@ -4,6 +4,8 @@
 import { getSessionCookie, verifySessionToken } from './_lib/auth';
 import { Env } from './_lib/types';
 
+const PUBLIC_API_PATHS = new Set(['/api/login', '/api/config']);
+
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, next, env } = context;
   const url = new URL(request.url);
@@ -66,8 +68,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 4. Authentication enforcement on all /api/* routes except /api/login
-    if (path !== '/api/login') {
+    // 4. Authentication enforcement on all /api/* routes except the public ones
+    if (!PUBLIC_API_PATHS.has(path)) {
       const token = getSessionCookie(request);
       if (!token) {
         return new Response(JSON.stringify({ error: 'Unauthorized: Session missing' }), {

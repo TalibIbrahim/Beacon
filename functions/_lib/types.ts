@@ -2,6 +2,7 @@ export interface Env {
   DASH_KV: KVNamespace;
   BACKUP_BUCKET?: R2Bucket;
   BACKUP_URL?: string;
+  VM_BACKUP_TOKEN?: string;
   OCI_TENANCY_OCID: string;
   OCI_USER_OCID: string;
   OCI_FINGERPRINT: string;
@@ -34,8 +35,13 @@ export interface ActivityLogEntry {
   details?: string;
 }
 
+export type BackupSource = 'r2' | 'url' | 'vm' | 'none';
+
 export interface BackupInfo {
   available: boolean;
+  source: BackupSource;
+  // false when the archive could not be checked (the VM source)
+  verified?: boolean;
   filename?: string;
   sizeBytes?: number;
   lastModified?: string;
@@ -65,7 +71,9 @@ export interface StatusResponse {
   motd: string;
   address: string;
   onlineSince: string | null;
-  trialDaysLeft: number;
+  region: string;
+  // null when TRIAL_END is not configured
+  trialDaysLeft: number | null;
   recentLog: ActivityLogEntry[];
   powerCooldownSeconds?: number;
   computeUsage?: ComputeUsage;

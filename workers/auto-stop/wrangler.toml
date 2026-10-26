@@ -5,10 +5,10 @@ compatibility_date = "2024-04-01"
 [triggers]
 crons = ["*/10 * * * *"]
 
-# Cloudflare KV binding (same namespace as the dashboard)
+# Cloudflare KV binding: must be the same namespace as the dashboard (wrangler.jsonc)
 [[kv_namespaces]]
 binding = "DASH_KV"
-id = "DASH_KV_ID_PLACEHOLDER"
+id = "ea5e590c0bd749b0acd7fe941cc9b706"
 
 [vars]
 OCI_REGION = "me-dubai-1"

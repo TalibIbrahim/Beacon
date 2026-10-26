@@ -1,24 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Radio, Loader2 } from 'lucide-react';
-import { getStatus, login } from './api';
+import React, { useCallback, useEffect, useState } from 'react';
+import { checkSession, login } from './api';
+import { AppMark } from './components/AppMark';
 import { DashboardScreen } from './components/DashboardScreen';
 import { LoginScreen } from './components/LoginScreen';
 
 export const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
-  // Check existing session on mount
+  // A cheap session check: a failing Oracle call no longer looks like being signed out
   useEffect(() => {
     let isMounted = true;
-    const checkSession = async () => {
-      try {
-        await getStatus();
-        if (isMounted) setIsAuthenticated(true);
-      } catch {
-        if (isMounted) setIsAuthenticated(false);
-      }
-    };
-    checkSession();
+    checkSession()
+      .then((ok) => isMounted && setIsAuthenticated(ok))
+      // Network trouble: let the dashboard show its own error and retry
+      .catch(() => isMounted && setIsAuthenticated(true));
     return () => {
       isMounted = false;
     };
@@ -29,25 +24,16 @@ export const App: React.FC = () => {
     setIsAuthenticated(true);
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-  };
+  const handleLogout = useCallback(() => setIsAuthenticated(false), []);
 
-  // Initial authentication check splash
   if (isAuthenticated === null) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="w-12 h-12 rounded-2xl bg-neutral-900 border border-white/10 flex items-center justify-center shadow-glass mb-4">
-          <Radio className="w-6 h-6 text-emerald-400" />
-        </div>
-        <Loader2 className="w-5 h-5 text-neutral-500 animate-spin" />
+      <div className="min-h-screen flex items-center justify-center" aria-busy="true">
+        <AppMark size={28} />
+        <span className="sr-only">Loading Beacon…</span>
       </div>
     );
   }
 
-  return isAuthenticated ? (
-    <DashboardScreen onLogout={handleLogout} />
-  ) : (
-    <LoginScreen onLogin={handleLogin} />
-  );
+  return isAuthenticated ? <DashboardScreen onLogout={handleLogout} /> : <LoginScreen onLogin={handleLogin} />;
 };

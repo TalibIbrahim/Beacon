@@ -1,157 +1,129 @@
 import React from 'react';
-import { Cpu, HardDrive, Sparkles, AlertCircle } from 'lucide-react';
+import { formatMoney } from '../format';
 import { ComputeUsage } from '../types';
 
 interface UsageCardProps {
   usage?: ComputeUsage;
-  trialDaysLeft: number;
+  trialDaysLeft: number | null;
+  region: string;
 }
 
-export const UsageCard: React.FC<UsageCardProps> = ({ usage, trialDaysLeft }) => {
-  if (!usage) return null;
-
-  const ocpuPercent = Math.min(100, Math.round((usage.ocpus / usage.freeTierLimit.maxOcpus) * 100));
-  const memPercent = Math.min(100, Math.round((usage.memoryInGBs / usage.freeTierLimit.maxMemoryGBs) * 100));
-
-  const getWidthClass = (pct: number) => {
-    if (pct <= 0) return 'w-0';
-    if (pct <= 25) return 'w-1/4';
-    if (pct <= 50) return 'w-1/2';
-    if (pct <= 75) return 'w-3/4';
-    return 'w-full';
-  };
-
-  const dailyCost = (usage.estimatedHourlyCost * 24).toFixed(2);
-  const monthlyCost = (usage.estimatedHourlyCost * 24 * 30).toFixed(2);
-
+const Meter: React.FC<{ label: string; value: number; max: number; unit: string }> = ({ label, value, max, unit }) => {
+  const ratio = max > 0 ? Math.min(1, value / max) : 0;
+  const over = value > max;
   return (
-    <div className="carbon-panel rounded-2xl p-6 border border-white/[0.08] space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/[0.06]">
-        <div>
-          <h2 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-            <span>Compute &amp; Trial Telemetry</span>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">
-              TRIAL TIER
-            </span>
-          </h2>
-          <p className="text-xs text-neutral-400 mt-0.5">
-            Resource quota consumption &amp; Oracle Always Free Ampere allowance comparison
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 font-mono text-xs">
-          <span className="text-neutral-500">TRIAL DAYS:</span>
-          <span className="font-bold text-white">{trialDaysLeft} DAYS</span>
-        </div>
-      </div>
-
-      {/* Grid: Compute Specs + Trial Cost Burn */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Allocated Specs */}
-        <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-3">
-          <div className="text-xs font-mono text-neutral-400 flex items-center justify-between">
-            <span>ALLOCATED HARDWARE</span>
-            <span className="text-neutral-300 font-semibold">{usage.shape}</span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <div className="flex items-center gap-2.5">
-              <Cpu className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <div className="text-[10px] font-mono text-neutral-500">CPU CORES</div>
-                <div className="text-xs font-mono font-bold text-white">
-                  {usage.ocpus} OCPU <span className="text-neutral-500 font-normal">({usage.vcpus} vCPU)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5">
-              <HardDrive className="w-4 h-4 text-emerald-400 shrink-0" />
-              <div>
-                <div className="text-[10px] font-mono text-neutral-500">RAM MEMORY</div>
-                <div className="text-xs font-mono font-bold text-white">
-                  {usage.memoryInGBs} GB
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-2 text-[11px] font-mono text-neutral-500 border-t border-white/[0.04] truncate">
-            {usage.processor} · {usage.networkGbps} Gbps
-          </div>
-        </div>
-
-        {/* Burn Rate & Cost */}
-        <div className="p-4 rounded-xl bg-black/40 border border-white/[0.06] space-y-3">
-          <div className="text-xs font-mono text-neutral-400 flex items-center justify-between">
-            <span>$300 TRIAL CREDIT BURN</span>
-            <span className="text-amber-400 font-bold font-mono">-${dailyCost}/DAY</span>
-          </div>
-
-          <div className="flex items-baseline gap-2 pt-1 font-mono">
-            <div className="text-2xl font-bold text-white">${usage.estimatedHourlyCost}</div>
-            <div className="text-xs text-neutral-400">/ hour (~${monthlyCost} / mo)</div>
-          </div>
-
-          <div className="text-[11px] text-neutral-400 leading-snug">
-            Deducted from your $300 trial credits while running on AMD E5.
-          </div>
-        </div>
-      </div>
-
-      {/* Always Free Ampere Target Comparison */}
-      <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/20 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-emerald-400">
-            <Sparkles className="w-4 h-4" />
-            <span>ORACLE ALWAYS FREE AMPERE (A1.FLEX) MIGRATION TARGET</span>
-          </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">
-            $0 / MONTH FOREVER
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-muted">{label}</span>
+        <span className="num">
+          <span className={over ? 'text-negative' : 'text-ink'}>{value}</span>
+          <span className="text-faint">
+            {' '}
+            of {max} {unit}
           </span>
-        </div>
-
-        <p className="text-xs text-neutral-300 leading-relaxed font-sans">
-          Oracle gives <strong className="text-white">4 OCPUs &amp; 24 GB RAM</strong> for free on Ampere A1 (ARM). Your current VM uses <strong>50%</strong> of that free capacity.
-        </p>
-
-        {/* Comparison bars */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1 font-mono text-xs">
-          {/* OCPU Comparison */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-neutral-400">Compute Allocation:</span>
-              <span className="text-neutral-200 font-bold">{usage.ocpus} / {usage.freeTierLimit.maxOcpus} OCPUs</span>
-            </div>
-            <div className="w-full bg-black/60 rounded-full h-1.5 overflow-hidden border border-white/[0.04]">
-              <div
-                className={`bg-emerald-400 h-full rounded-full transition-all duration-500 ${getWidthClass(ocpuPercent)}`}
-              />
-            </div>
-          </div>
-
-          {/* Memory Comparison */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-neutral-400">Memory Allocation:</span>
-              <span className="text-neutral-200 font-bold">{usage.memoryInGBs} / {usage.freeTierLimit.maxMemoryGBs} GB RAM</span>
-            </div>
-            <div className="w-full bg-black/60 rounded-full h-1.5 overflow-hidden border border-white/[0.04]">
-              <div
-                className={`bg-emerald-400 h-full rounded-full transition-all duration-500 ${getWidthClass(memPercent)}`}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-2 border-t border-emerald-500/20 flex items-start gap-2 text-[11px] text-neutral-400">
-          <AlertCircle className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-          <span>
-            Dubai (<code className="text-neutral-300">me-dubai-1</code>) Ampere capacity is currently constrained. Before your 36-day trial ends, you can retry provisioning <code className="text-neutral-300">VM.Standard.A1.Flex</code> or create a volume backup so your world transfers seamlessly!
-          </span>
-        </div>
+        </span>
+      </div>
+      <div
+        className="mt-2 h-1.5 rounded-full bg-raised overflow-hidden"
+        role="meter"
+        aria-label={`${label}: ${value} of ${max} ${unit}`}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+      >
+        <div className={`h-full rounded-full ${over ? 'bg-negative' : 'bg-muted'}`} style={{ width: `${ratio * 100}%` }} />
       </div>
     </div>
+  );
+};
+
+export const UsageCard: React.FC<UsageCardProps> = ({ usage, trialDaysLeft, region }) => {
+  if (!usage) return null;
+
+  const monthly = usage.estimatedHourlyCost * 24 * 30;
+  const { maxOcpus, maxMemoryGBs } = usage.freeTierLimit;
+  const fitsFree = usage.ocpus <= maxOcpus && usage.memoryInGBs <= maxMemoryGBs;
+  const trialUrgent = trialDaysLeft !== null && trialDaysLeft <= 7;
+
+  const cells: Array<{ label: string; value: React.ReactNode; sub: React.ReactNode }> = [
+    {
+      label: 'Size',
+      value: (
+        <>
+          {usage.ocpus} <span className="text-faint text-sm">OCPU</span> · {usage.memoryInGBs}{' '}
+          <span className="text-faint text-sm">GB</span>
+        </>
+      ),
+      sub: `${usage.vcpus} vCPU · ${usage.processor}`,
+    },
+    {
+      label: 'Cost while running',
+      value: usage.isAlwaysFreeShape ? (
+        '$0'
+      ) : (
+        <>
+          {formatMoney(usage.estimatedHourlyCost, 3)}
+          <span className="text-faint text-sm"> /h</span>
+        </>
+      ),
+      sub: usage.isAlwaysFreeShape ? 'Always Free shape' : `≈ ${formatMoney(monthly)} per 30 days, est.`,
+    },
+    {
+      label: 'Trial credit',
+      value:
+        trialDaysLeft === null ? (
+          <span className="text-faint">—</span>
+        ) : (
+          <span className={trialUrgent ? 'text-warning' : undefined}>
+            {trialDaysLeft} <span className="text-faint text-sm">{trialDaysLeft === 1 ? 'day' : 'days'}</span>
+          </span>
+        ),
+      sub:
+        trialDaysLeft === null
+          ? 'Set TRIAL_END to track it'
+          : trialDaysLeft === 0
+          ? 'Ended. Download the world now.'
+          : trialUrgent
+          ? 'Download the world before it ends'
+          : 'left on the Oracle trial',
+    },
+  ];
+
+  return (
+    <section className="panel" aria-labelledby="usage-heading">
+      <header className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 px-5 pt-4 pb-3">
+        <h2 id="usage-heading" className="text-base font-semibold">
+          Oracle Cloud
+        </h2>
+        <span className="text-muted truncate max-w-full">
+          {usage.shape} · {region}
+        </span>
+      </header>
+
+      <dl className="grid grid-cols-1 sm:grid-cols-3 border-y border-line">
+        {cells.map((cell) => (
+          <div
+            key={cell.label}
+            className="px-5 py-4 border-t border-line first:border-t-0 sm:border-t-0 sm:border-l sm:first:border-l-0 min-w-0"
+          >
+            <dt className="label">{cell.label}</dt>
+            <dd className="mt-1 text-xl leading-7 num">{cell.value}</dd>
+            <dd className="mt-0.5 text-xs text-faint truncate">{cell.sub}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="px-5 py-5 grid gap-5 sm:grid-cols-2">
+        <p className="text-muted sm:col-span-2">
+          {usage.isAlwaysFreeShape
+            ? 'This VM runs on an Always Free shape, so it costs nothing to keep.'
+            : fitsFree
+            ? `This VM's size fits Oracle's Always Free Ampere A1 allowance (${maxOcpus} OCPU, ${maxMemoryGBs} GB), so the world can move there and run for $0.`
+            : `This VM is larger than Oracle's Always Free Ampere A1 allowance (${maxOcpus} OCPU, ${maxMemoryGBs} GB). Shrink it before moving to the free tier.`}
+        </p>
+        <Meter label="CPU" value={usage.ocpus} max={maxOcpus} unit="OCPU" />
+        <Meter label="Memory" value={usage.memoryInGBs} max={maxMemoryGBs} unit="GB" />
+      </div>
+    </section>
   );
 };

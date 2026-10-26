@@ -16,8 +16,12 @@ export interface ActivityLogEntry {
   details?: string;
 }
 
+export type BackupSource = 'r2' | 'url' | 'vm' | 'none';
+
 export interface BackupInfo {
   available: boolean;
+  source: BackupSource;
+  verified?: boolean;
   filename?: string;
   sizeBytes?: number;
   lastModified?: string;
@@ -47,12 +51,15 @@ export interface StatusResponse {
   motd: string;
   address: string;
   onlineSince: string | null;
-  trialDaysLeft: number;
+  region: string;
+  trialDaysLeft: number | null;
   recentLog: ActivityLogEntry[];
   powerCooldownSeconds?: number;
   computeUsage?: ComputeUsage;
   backupInfo?: BackupInfo;
 }
+
+export type PowerAction = 'start' | 'stop' | 'restart';
 
 export interface ToastMessage {
   id: string;

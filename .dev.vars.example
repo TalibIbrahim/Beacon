@@ -1,21 +1,30 @@
-# Oracle Cloud Infrastructure (OCI) Credentials
+# Oracle Cloud Infrastructure (OCI) credentials
 OCI_TENANCY_OCID=<your-tenancy-ocid>
 OCI_USER_OCID=<your-user-ocid>
 OCI_FINGERPRINT=00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
-# Base64 string of the private key (PKCS#8 format: openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in key.pem -out key_pkcs8.pem)
+# Base64 of the PKCS#8 private key (see README, "OCI API key")
 OCI_PRIVATE_KEY_B64=<your-base64-encoded-pkcs8-private-key>
-OCI_REGION=us-ashburn-1
+OCI_REGION=me-dubai-1
 OCI_INSTANCE_OCID=<your-instance-ocid>
 OCI_COMPARTMENT_OCID=<your-compartment-ocid>
 
-# Authentication & Security
-# Generated using: npm run hash-password "your-strong-password"
+# Sign-in
+# Generate with: npm run hash-password "your-strong-password"
 PASSWORD_HASH=pbkdf2$100000$<salt>$<hash>
-# Random 32+ character secret for HMAC session signing
+# Random secret of 32+ characters for signing session cookies
 SESSION_SECRET=change-this-to-a-very-secure-random-secret-string-at-least-32-chars
 
-# Oracle Cloud Free Trial End Date (ISO 8601 UTC string)
+# Optional: when the Oracle free trial ends (ISO 8601, UTC). Leave out to hide the countdown.
 TRIAL_END=2099-12-31T00:00:00Z
 
-# Backup download URL (Optional - e.g. Oracle Pre-Authenticated Request URL)
-BACKUP_URL=<your-backup-url>
+# Optional: world save download. Pick one (see README, "World saves"):
+#   - an R2 bucket bound as BACKUP_BUCKET (local dev: --r2 BACKUP_BUCKET=beacon-backups), or
+#   - an Oracle Object Storage pre-authenticated request URL, ending in /o/ for a bucket link
+# BACKUP_URL=https://objectstorage.me-dubai-1.oraclecloud.com/p/<token>/n/<namespace>/b/<bucket>/o/
+
+# Optional: secret path segment for the direct-from-VM fallback (must match the VM's VM_BACKUP_TOKEN)
+# VM_BACKUP_TOKEN=<random-string>
+
+# Optional: Cloudflare Turnstile bot check on the sign-in screen
+# TURNSTILE_SITEKEY=<turnstile-site-key>
+# TURNSTILE_SECRET=<turnstile-secret-key>

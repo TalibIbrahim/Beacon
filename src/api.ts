@@ -1,34 +1,45 @@
 // API client wrapper for Beacon
 
-import { StatusResponse } from './types';
+import { PowerAction, StatusResponse } from './types';
 
 export class ApiError extends Error {
   status: number;
   retryAfter?: number;
   requiresForce?: boolean;
+  playerCount?: number;
 
-  constructor(message: string, status: number, retryAfter?: number, requiresForce?: boolean) {
+  constructor(
+    message: string,
+    status: number,
+    extra: { retryAfter?: number; requiresForce?: boolean; playerCount?: number } = {}
+  ) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
-    this.retryAfter = retryAfter;
-    this.requiresForce = requiresForce;
+    this.retryAfter = extra.retryAfter;
+    this.requiresForce = extra.requiresForce;
+    this.playerCount = extra.playerCount;
   }
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers || {});
-  
+
   if (options.method && options.method.toUpperCase() === 'POST') {
     headers.set('Content-Type', 'application/json');
     headers.set('X-Requested-With', 'server-control');
   }
 
-  const response = await fetch(path, {
-    ...options,
-    headers,
-    credentials: 'same-origin',
-  });
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      ...options,
+      headers,
+      credentials: 'same-origin',
+    });
+  } catch {
+    throw new ApiError('Could not reach Beacon. Check your connection.', 0);
+  }
 
   if (response.status === 204) {
     return {} as T;
@@ -46,12 +57,33 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 
   if (!response.ok) {
     const errorMsg = data?.error || `Request failed with status ${response.status}`;
-    const retryAfter = data?.retryAfter ? parseInt(data.retryAfter, 10) : undefined;
-    const requiresForce = Boolean(data?.requiresForce);
-    throw new ApiError(errorMsg, response.status, retryAfter, requiresForce);
+    throw new ApiError(errorMsg, response.status, {
+      retryAfter: data?.retryAfter ? parseInt(data.retryAfter, 10) : undefined,
+      requiresForce: Boolean(data?.requiresForce),
+      playerCount: typeof data?.playerCount === 'number' ? data.playerCount : undefined,
+    });
   }
 
   return data as T;
+}
+
+export async function getConfig(): Promise<{ turnstileSiteKey: string | null }> {
+  try {
+    return await apiFetch<{ turnstileSiteKey: string | null }>('/api/config');
+  } catch {
+    return { turnstileSiteKey: null };
+  }
+}
+
+// Resolves true when the session cookie is valid; false on 401. Other failures throw.
+export async function checkSession(): Promise<boolean> {
+  try {
+    await apiFetch<{ authenticated: boolean }>('/api/session');
+    return true;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return false;
+    throw err;
+  }
 }
 
 export async function login(password: string, turnstileToken?: string): Promise<void> {
@@ -69,13 +101,11 @@ export async function logout(): Promise<void> {
 }
 
 export async function getStatus(): Promise<StatusResponse> {
-  return await apiFetch<StatusResponse>('/api/status', {
-    method: 'GET',
-  });
+  return await apiFetch<StatusResponse>('/api/status');
 }
 
 export async function sendPowerAction(
-  action: 'start' | 'stop' | 'restart',
+  action: PowerAction,
   force?: boolean
 ): Promise<{ success: boolean; message?: string }> {
   return await apiFetch<{ success: boolean; message?: string }>('/api/power', {
@@ -84,22 +114,6 @@ export async function sendPowerAction(
   });
 }
 
-export async function downloadBackup(): Promise<void> {
-  // 1. Verify status endpoint first
-  const check = await fetch('/api/backup', { credentials: 'same-origin' });
-  const data = await check.json().catch(() => null);
-  if (!check.ok || !data?.available) {
-    throw new ApiError(data?.message || data?.error || 'Backup is currently unavailable', check.status);
-  }
-
-  // 2. Trigger native browser file download (follows 302 redirect to Oracle without CORS restrictions)
-  const a = document.createElement('a');
-  a.style.display = 'none';
-  a.href = '/api/backup?download=1';
-  a.setAttribute('download', 'minecraft-world-latest.tar.gz');
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => {
-    document.body.removeChild(a);
-  }, 1000);
-}
+// The download itself is a plain link to this URL (see BackupCard): the browser follows the
+// stream or redirect natively, so there is no CORS and no buffering of a large file in memory.
+export const BACKUP_DOWNLOAD_URL = '/api/backup?download=1';

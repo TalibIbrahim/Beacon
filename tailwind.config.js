@@ -1,46 +1,48 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
-  darkMode: 'class',
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       colors: {
-        background: '#0a0c10',
-        surface: {
-          DEFAULT: '#11141c',
-          card: '#161a24',
-          hover: '#1d2331',
-          border: 'rgba(255, 255, 255, 0.08)',
-        },
-        accent: {
-          DEFAULT: '#10b981', // Emerald beacon accent
-          hover: '#059669',
-          glow: 'rgba(16, 185, 129, 0.25)',
-        },
+        ground: 'var(--ground)',
+        surface: 'var(--surface)',
+        raised: 'var(--raised)',
+        line: 'var(--border)',
+        rule: 'var(--rule)',
+        control: 'var(--control)',
+        ink: 'var(--text)',
+        muted: 'var(--muted)',
+        faint: 'var(--faint)',
+        accent: 'var(--accent)',
+        positive: 'var(--positive)',
+        negative: 'var(--negative)',
+        warning: 'var(--warning)',
+        'pill-positive': 'var(--pill-positive-bg)',
+        'pill-negative': 'var(--pill-negative-bg)',
+        'pill-warning': 'var(--pill-warning-bg)',
+      },
+      borderRadius: {
+        card: '6px',
       },
       fontFamily: {
-        sans: [
-          'Inter',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          '"SF Pro Display"',
-          '"SF Pro Text"',
-          '"Segoe UI"',
-          'Roboto',
-          'Helvetica',
-          'Arial',
-          'sans-serif',
-        ],
+        sans: ['"Public Sans"', 'system-ui', '-apple-system', '"Segoe UI"', 'Roboto', 'sans-serif'],
+        mono: ['ui-monospace', '"SF Mono"', '"Cascadia Mono"', 'Consolas', 'monospace'],
       },
-      boxShadow: {
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-        'glass-sm': '0 4px 16px 0 rgba(0, 0, 0, 0.25)',
-        'glow-accent': '0 0 24px -4px rgba(16, 185, 129, 0.35)',
+      keyframes: {
+        'toast-in': {
+          from: { opacity: '0', transform: 'translateY(-8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'dialog-in': {
+          from: { opacity: '0', transform: 'scale(0.97)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'toast-in': 'toast-in 160ms ease-out',
+        'dialog-in': 'dialog-in 140ms ease-out',
       },
     },
   },
   plugins: [],
-}
+};

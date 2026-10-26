@@ -1,37 +1,48 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Beacon - Direct World Save Pack & Download Server (100% Free)
+# Beacon - serve the latest world save straight from the VM on port 8080
 # ==============================================================================
-# Packs the Minecraft world save and serves it on port 8080 for direct download.
-# Run on your Oracle VM:
-#   bash serve-backup.sh
+# The free fallback when no R2 bucket or BACKUP_URL is configured. Beacon's download
+# button redirects to http://<vm-ip>:8080/[<VM_BACKUP_TOKEN>/]world-latest.tar.gz.
+#
+#   bash serve-backup.sh            # pack a fresh archive, then serve it
+#   bash serve-backup.sh --no-pack  # serve the archive that is already there
+#
+# Only SERVE_DIR is published - never the server folder itself (it holds
+# server.properties with the RCON password, ops.json and the logs).
+#
+# Before this works:
+#   - OCI console: add an ingress rule for TCP 8080 to the instance's security list
+#   - On Oracle's Ubuntu images, also open the host firewall:
+#       sudo iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+#   - Set VM_BACKUP_TOKEN here and in Beacon so the URL cannot be guessed
+#
+# The download is plain HTTP, so browsers warn about it; choose "Keep".
 # ==============================================================================
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MC_DIR="${MC_DIR:-/opt/minecraft}"
-cd "$MC_DIR"
+SERVE_DIR="${SERVE_DIR:-$MC_DIR/.beacon-serve}"
+PORT="${PORT:-8080}"
+VM_BACKUP_TOKEN="${VM_BACKUP_TOKEN:-}"
+export MC_DIR SERVE_DIR VM_BACKUP_TOKEN
 
-echo "[$(date '+%H:%M:%S')] Flushing live world data to disk..."
-if command -v screen >/dev/null 2>&1 && screen -list | grep -q "minecraft"; then
-    screen -S minecraft -X stuff "save-all flush^M"
-    sleep 2
-elif command -v tmux >/dev/null 2>&1 && tmux has-session -t minecraft 2>/dev/null; then
-    tmux send-keys -t minecraft "save-all flush" ENTER
-    sleep 2
+if [ "${1:-}" != "--no-pack" ]; then
+  # Pack only; skip the R2 / Object Storage uploads unless they are explicitly configured
+  R2_REMOTE="${R2_REMOTE:-__none__}" bash "$SCRIPT_DIR/backup-world.sh"
 fi
 
-echo "[$(date '+%H:%M:%S')] Compressing world files into world-latest.tar.gz..."
-tar -czf world-latest.tar.gz \
-    --exclude="*.log" \
-    --exclude="*.log.gz" \
-    world world_nether world_the_end server.properties whitelist.json ops.json 2>/dev/null || \
-tar -czf world-latest.tar.gz \
-    world server.properties 2>/dev/null
+FILE_PATH="world-latest.tar.gz"
+if [ -n "$VM_BACKUP_TOKEN" ]; then FILE_PATH="$VM_BACKUP_TOKEN/world-latest.tar.gz"; fi
 
-ARCHIVE_SIZE=$(du -h world-latest.tar.gz | cut -f1)
-echo "[$(date '+%H:%M:%S')] Snapshot created successfully (${ARCHIVE_SIZE})."
-echo "[$(date '+%H:%M:%S')] Serving direct download on port 8080..."
-echo "Click 'DOWNLOAD SAVE (.TAR.GZ)' in Beacon or visit http://$(curl -s ifconfig.me):8080/world-latest.tar.gz"
+if [ ! -f "$SERVE_DIR/$FILE_PATH" ]; then
+  echo "Error: $SERVE_DIR/$FILE_PATH not found. Run without --no-pack first." >&2
+  exit 1
+fi
 
-python3 -m http.server 8080
+PUBLIC_IP="$(curl -4 -s --max-time 5 https://ifconfig.me || echo '<vm-ip>')"
+echo "Serving $SERVE_DIR on port $PORT (Ctrl+C to stop)."
+echo "Download: http://${PUBLIC_IP}:${PORT}/${FILE_PATH}"
+exec python3 -m http.server "$PORT" --directory "$SERVE_DIR"
