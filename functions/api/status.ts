@@ -6,7 +6,9 @@ import { getOciInstanceDetails, getOciPublicIp } from '../_lib/oci';
 import { checkPowerCooldown } from '../_lib/ratelimit';
 import { ResolvedBackup, resolveBackup } from '../_lib/backup';
 import { getBackupJobInfo } from '../_lib/backupjob';
-import { BackupJobInfo, Env, MinecraftState, StatusResponse, VmState } from '../_lib/types';
+import { getLeaderboard } from '../_lib/players';
+import { readSnapshot } from '../_lib/snapshot';
+import { BackupJobInfo, Env, LeaderboardEntry, MinecraftState, StatusResponse, VmState } from '../_lib/types';
 
 const ONLINE_SINCE_KEY = 'online_since';
 
@@ -84,12 +86,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // 6. Recent activity log and arm-free backups, then the world save: a backup reported after the
     //    bucket was last checked makes resolveBackup check it again, so "Saved" updates at once
-    const [recentLog, backupJob] = await Promise.all([
+    const db = env.DASH_DB;
+    const [recentLog, backupJob, leaderboard] = await Promise.all([
       getRecentActivityLog(env.DASH_KV, 20),
       getBackupJobInfo(env, { vmState, onlineSince }).catch((err): BackupJobInfo | undefined => {
         console.error('Backup job status failed:', err instanceof Error ? err.message : err);
         return undefined;
       }),
+      db
+        ? readSnapshot(db)
+            .then((snap) => getLeaderboard(db, snap))
+            .catch((err): LeaderboardEntry[] | undefined => {
+              console.error('Leaderboard failed:', err instanceof Error ? err.message : err);
+              return undefined;
+            })
+        : Promise.resolve(undefined),
     ]);
     const lastReportMs = backupJob?.lastRun ? new Date(backupJob.lastRun.finishedAt).getTime() : 0;
     const backup = await resolveBackup(env, async () => ({ vmState, publicIp }), lastReportMs).catch(
@@ -114,6 +125,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       computeUsage,
       backupInfo: backup.info,
       backupJob,
+      leaderboard,
     };
 
     return new Response(JSON.stringify(response), {

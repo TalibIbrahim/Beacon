@@ -348,6 +348,7 @@ them.
 | `MC_TMUX_SESSION` | `mc` | tmux session running the server; empty skips the step |
 | `MC_REMOTE_DIR` | `/home/ubuntu/minecraft` | Server folder on Minecraft-Premium (for `logs/latest.log`) |
 | `BACKUP_ROOT` / `BACKUP_CMD` | `~/mc-backup` / `~/mc-backup.sh` | Your existing backup folder and script |
+| `MC_HOST` / `MC_PORT` | `10.0.0.16` / `25565` | Where `mc-probe.py` pings Minecraft (the private IP, so it works without the public address) |
 
 ### Set it up
 
@@ -392,6 +393,33 @@ them.
 
 Run either by hand to watch it (`~/beacon/mc-agent.sh poll` prints to the terminal instead of the
 log), and `~/beacon/pack-and-upload.sh --force` to upload the current copy straight away.
+
+## Playtime and last seen
+
+Every minute `mc-agent.sh` runs `scripts/mc-probe.py ping`, a Minecraft server-list ping to
+Minecraft-Premium's private IP (`MC_HOST`, port `MC_PORT`; Python 3 standard library, no pip), and
+sends who is online with its heartbeat. Beacon compares that list with the sessions open in D1:
+
+- **A new name** opens a session (and posts "joined"). **A missing name** closes it at the last poll
+  that actually saw the player (and posts "left" with the session length). D1 is written only then.
+- **Playtime is never inflated.** If arm-free stops reporting, or Minecraft stops answering, open
+  sessions end at their last sighting; nothing is counted for the silence, and nothing is announced
+  across a gap of more than 3 minutes. While the server is down, players are not reported as leaving
+  one by one: the "Server stopped" alert covers it.
+- **Names are labels, not identities.** The server runs in offline mode, so anyone can use any name.
+  Players are keyed by the lowercase name and shown with the latest casing; names are always rendered
+  as text on the page and escaped in Discord.
+- **The list must be complete.** The ping only carries a sample of names (Paper sends up to 12), and
+  players who turned off "Allow Server Listings" show as anonymous. When the names do not add up to
+  the player count the agent reports the list as unknown and Beacon changes nothing. With RCON set up
+  (see [Server health](#server-health)) the agent uses `list`, which has every name.
+
+The **Leaderboard** card shows the top 10 by playtime with sessions, an "Online now" badge while the
+last sighting is under 3 minutes old, and "last seen" otherwise. To start counting from zero:
+
+```bash
+npx wrangler d1 execute beacon-agent --remote --command "DELETE FROM players"
+```
 
 ## Discord alerts
 
@@ -523,7 +551,7 @@ stop event and de-duplicate it with the dashboard's.
 | `POST /api/login` | public | `{ password, turnstileToken? }` → sets the session cookie |
 | `GET /api/config` | public | `{ turnstileSiteKey }` for the sign-in screen |
 | `GET /api/session` | session | 200 if the cookie is valid, 401 if not |
-| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity, and `backupJob` (heartbeat, last backup, request state, cooldown, overdue) |
+| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity, `backupJob` (heartbeat, last backup, request state, cooldown, overdue) and `leaderboard` (top 10 by playtime) |
 | `POST /api/power` | session | `{ action: "start" \| "stop" \| "restart", force? }`; 409 with `playerCount` if people are online |
 | `GET /api/backup` | session | Where the world save is and whether it can be downloaded |
 | `GET /api/backup?download=1` | session | The download (stream from R2, or a redirect) |

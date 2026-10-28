@@ -6,6 +6,7 @@ import { PayloadError, parsePoll } from '../../_lib/agentpayload';
 import { readAgentJson } from '../../_lib/agent';
 import { emitEvents, NewEvent } from '../../_lib/events';
 import { getOciPublicIp } from '../../_lib/oci';
+import { playerChanges } from '../../_lib/players';
 import { claimBackup, mergeSnapshot, readSnapshot, SNAPSHOT_MIN_INTERVAL_MS, StoredSnapshot, writeSnapshot } from '../../_lib/snapshot';
 import { Env } from '../../_lib/types';
 
@@ -63,9 +64,14 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     // At most one snapshot write every 50 seconds, however often the agent calls
     let next: StoredSnapshot | null = null;
+    let playerEvents: NewEvent[] = [];
     if (!prev || now - prev.seenAt >= SNAPSHOT_MIN_INTERVAL_MS) {
       next = mergeSnapshot(prev, payload, now);
       statements.push(writeSnapshot(db, next));
+      // Joins and leaves: written in the same transaction as the snapshot, and only when they happen
+      const players = await playerChanges(db, prev, next, now);
+      statements.push(...players.statements);
+      playerEvents = players.events;
     }
 
     const [claim] = await db.batch(statements);
@@ -73,7 +79,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // Discord runs after the answer is sent, so it never slows the poll
     if (next) {
       const changed = next;
-      waitUntil(serverEvents(env, prev, changed).then((events) => emitEvents(env, events, now)));
+      waitUntil(serverEvents(env, prev, changed).then((events) => emitEvents(env, [...events, ...playerEvents], now)));
     }
     return json({ backup: (claim.meta.changes ?? 0) === 1 });
   } catch (err) {

@@ -24,6 +24,8 @@
 #   MC_REMOTE_DIR     server folder on Minecraft-Premium      default /home/ubuntu/minecraft
 #   BACKUP_ROOT       default ~/mc-backup
 #   BACKUP_CMD        default ~/mc-backup.sh
+#   MC_HOST           Minecraft-Premium's private IP           default 10.0.0.16
+#   MC_PORT           Minecraft port                           default 25565
 #
 # Output goes to ~/mc-backup/agent.log (trimmed to the last 200 KB past 1 MB) unless you run it
 # in a terminal. The token and upload URL are never printed or put on a command line.
@@ -33,7 +35,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${BEACON_AGENT_ENV:-$HOME/.config/beacon/agent.env}"
-ENV_KEYS=" BEACON_URL AGENT_TOKEN UPLOAD_URL PREMIUM_SSH MC_TMUX_SESSION MC_REMOTE_DIR BACKUP_ROOT BACKUP_CMD "
+ENV_KEYS=" BEACON_URL AGENT_TOKEN UPLOAD_URL PREMIUM_SSH MC_TMUX_SESSION MC_REMOTE_DIR BACKUP_ROOT BACKUP_CMD MC_HOST MC_PORT "
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] agent: $*"; }
 
@@ -62,6 +64,8 @@ MODE="${1:-}"
 BEACON_URL="${BEACON_URL:-}"
 AGENT_TOKEN="${AGENT_TOKEN:-}"
 PREMIUM_SSH="${PREMIUM_SSH:-ubuntu@10.0.0.16}"
+MC_HOST="${MC_HOST:-10.0.0.16}"
+MC_PORT="${MC_PORT:-25565}"
 MC_TMUX_SESSION="${MC_TMUX_SESSION-mc}"
 MC_REMOTE_DIR="${MC_REMOTE_DIR:-/home/ubuntu/minecraft}"
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/mc-backup}"
@@ -131,6 +135,17 @@ last_success_iso() {
   fi
 }
 
+# Extra poll fields from scripts/mc-probe.py: Minecraft's status and who is online, probed over the
+# private IP. The probe prints one line of JSON (or null); Beacon validates it strictly anyway.
+probe_fields() {
+  command -v python3 >/dev/null 2>&1 || return 0
+  [ -f "$SCRIPT_DIR/mc-probe.py" ] || return 0
+  local mc
+  mc="$(timeout 15 python3 "$SCRIPT_DIR/mc-probe.py" ping --host "$MC_HOST" --port "$MC_PORT" 2>/dev/null | head -c 6000)"
+  [ -n "$mc" ] || mc=null
+  printf ',"minecraft":%s' "$mc"
+}
+
 heartbeat_json() {
   local busy="$1" last size cron sched
   last="$(last_success_iso)"
@@ -141,8 +156,8 @@ heartbeat_json() {
     cron=null
   fi
   crontab -l 2>/dev/null | grep -Eq '^[^#]*mc-agent\.sh[[:space:]]+scheduled' && sched=true || sched=false
-  printf '{"lastSuccess":%s,"archiveBytes":%s,"busy":%s,"cronActive":%s,"scheduleInstalled":%s}' \
-    "$(json_str "$last")" "${size:-null}" "$busy" "$cron" "$sched"
+  printf '{"lastSuccess":%s,"archiveBytes":%s,"busy":%s,"cronActive":%s,"scheduleInstalled":%s%s}' \
+    "$(json_str "$last")" "${size:-null}" "$busy" "$cron" "$sched" "$(probe_fields)"
 }
 
 report() { # trigger ok [error]

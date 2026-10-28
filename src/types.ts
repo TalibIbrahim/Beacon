@@ -99,6 +99,15 @@ export interface StatusResponse {
   computeUsage?: ComputeUsage;
   backupInfo?: BackupInfo;
   backupJob?: BackupJobInfo;
+  leaderboard?: LeaderboardEntry[];
+}
+
+export interface LeaderboardEntry {
+  name: string; // untrusted (offline mode): render as text only
+  totalMs: number;
+  sessions: number;
+  lastSeen: string;
+  online: boolean;
 }
 
 export type PowerAction = 'start' | 'stop' | 'restart';

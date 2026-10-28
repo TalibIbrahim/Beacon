@@ -133,4 +133,14 @@ export interface StatusResponse {
   computeUsage?: ComputeUsage;
   backupInfo?: BackupInfo;
   backupJob?: BackupJobInfo;
+  // Top players by playtime (from arm-free's player lists); undefined until DASH_DB is bound
+  leaderboard?: LeaderboardEntry[];
+}
+
+export interface LeaderboardEntry {
+  name: string; // untrusted text from an offline-mode server: render as text only
+  totalMs: number;
+  sessions: number;
+  lastSeen: string;
+  online: boolean;
 }

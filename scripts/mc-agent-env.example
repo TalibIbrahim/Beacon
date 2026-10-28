@@ -16,3 +16,6 @@ UPLOAD_URL=
 # MC_REMOTE_DIR=/home/ubuntu/minecraft
 # BACKUP_ROOT=/home/ubuntu/mc-backup
 # BACKUP_CMD=/home/ubuntu/mc-backup.sh
+# Minecraft-Premium's private IP and port, for the status probe (scripts/mc-probe.py)
+# MC_HOST=10.0.0.16
+# MC_PORT=25565
