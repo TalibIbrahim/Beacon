@@ -1,6 +1,8 @@
 name = "beacon-auto-stop"
 main = "src/index.ts"
 compatibility_date = "2024-04-01"
+# No public workers.dev URL: the cron trigger needs none, and /trigger must not be callable by anyone
+workers_dev = false
 
 [triggers]
 crons = ["*/10 * * * *"]
