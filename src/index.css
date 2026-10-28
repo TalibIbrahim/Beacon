@@ -63,35 +63,35 @@
 */
 :root {
   color-scheme: dark;
-  /* Twilight: warm plum ground, lighter at the top */
-  --ground-top: #3a2b33;
-  --ground: #2a2026;
-  --ground-bottom: #221a1f;
-  --surface: #342a31;
-  --raised: #40353d;
-  --border: #4d4048;
-  --rule: #43373f;
-  --control: #92848c;
+  /* Neutral charcoal ground, a touch lighter at the top */
+  --ground-top: #302f2d;
+  --ground: #252422;
+  --ground-bottom: #1f1e1c;
+  --surface: #2e2d2b;
+  --raised: #3a3936;
+  --border: #4a4844;
+  --rule: #403e3b;
+  --control: #8e8a84;
   /* Outlines: a warm rim in the dark, so cards and buttons read against the ground */
-  --edge: #66555f;
+  --edge: #5f5c58;
   /* Hard shadows and pixel-art outlines: near black in both themes */
-  --obsidian: #0e0a0c;
-  --text: #f6efe9;
-  --muted: #d0c3c6;
-  --faint: #b3a4aa;
+  --obsidian: #0d0d0c;
+  --text: #f3f1ec;
+  --muted: #cdc9c2;
+  --faint: #ada9a2;
   --accent: #52d6e6;
   --accent-hover: #74e2ef;
-  --accent-ink: #0e0a0c;
+  --accent-ink: #0d0d0c;
   --focus: #52d6e6;
   --positive: #86d672;
   --negative: #ff8080;
-  --on-negative: #0e0a0c;
+  --on-negative: #0d0d0c;
   --warning: #f3ae45;
   --info: #82c4ff;
-  --pill-positive-bg: #2c3a2c;
-  --pill-negative-bg: #4a2a31;
-  --pill-warning-bg: #47362a;
-  --pill-info-bg: #2b3646;
+  --pill-positive-bg: #2b3a2a;
+  --pill-negative-bg: #46292b;
+  --pill-warning-bg: #453628;
+  --pill-info-bg: #29343f;
   --grass: #5fae4e;
   --grass-dark: #3f7d33;
   --dirt: #8b5e3c;

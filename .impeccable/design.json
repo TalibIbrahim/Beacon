@@ -7,7 +7,7 @@
       "ground-top": {
         "role": "neutral",
         "displayName": "Twilight Plum Top",
-        "canonical": "#3a2b33",
+        "canonical": "#302f2d",
         "oklch": "oklch(30.9% 0.026 345.4)",
         "tonalRamp": [
           "oklch(15% 0.026 345.4)",
@@ -23,7 +23,7 @@
       "ground": {
         "role": "neutral",
         "displayName": "Twilight Plum",
-        "canonical": "#2a2026",
+        "canonical": "#252422",
         "oklch": "oklch(25.8% 0.019 341.8)",
         "tonalRamp": [
           "oklch(15% 0.019 341.8)",
@@ -39,7 +39,7 @@
       "ground-bottom": {
         "role": "neutral",
         "displayName": "Twilight Plum Deep",
-        "canonical": "#221a1f",
+        "canonical": "#1f1e1c",
         "oklch": "oklch(22.9% 0.016 340.5)",
         "tonalRamp": [
           "oklch(15% 0.016 340.5)",
@@ -55,7 +55,7 @@
       "surface": {
         "role": "neutral",
         "displayName": "Stone Slab",
-        "canonical": "#342a31",
+        "canonical": "#2e2d2b",
         "oklch": "oklch(29.9% 0.019 337)",
         "tonalRamp": [
           "oklch(15% 0.019 337)",
@@ -71,7 +71,7 @@
       "raised": {
         "role": "neutral",
         "displayName": "Raised Slab",
-        "canonical": "#40353d",
+        "canonical": "#3a3936",
         "oklch": "oklch(34.4% 0.02 335.8)",
         "tonalRamp": [
           "oklch(15% 0.02 335.8)",
@@ -87,7 +87,7 @@
       "border": {
         "role": "neutral",
         "displayName": "Quiet Border",
-        "canonical": "#4d4048",
+        "canonical": "#4a4844",
         "oklch": "oklch(38.8% 0.022 340.7)",
         "tonalRamp": [
           "oklch(15% 0.022 340.7)",
@@ -103,7 +103,7 @@
       "rule": {
         "role": "neutral",
         "displayName": "Row Rule",
-        "canonical": "#43373f",
+        "canonical": "#403e3b",
         "oklch": "oklch(35.3% 0.021 338.4)",
         "tonalRamp": [
           "oklch(15% 0.021 338.4)",
@@ -119,7 +119,7 @@
       "control": {
         "role": "neutral",
         "displayName": "Control Grey",
-        "canonical": "#92848c",
+        "canonical": "#8e8a84",
         "oklch": "oklch(62.8% 0.02 342.3)",
         "tonalRamp": [
           "oklch(15% 0.02 342.3)",
@@ -135,7 +135,7 @@
       "edge": {
         "role": "neutral",
         "displayName": "Warm Rim",
-        "canonical": "#66555f",
+        "canonical": "#5f5c58",
         "oklch": "oklch(47% 0.027 342.1)",
         "tonalRamp": [
           "oklch(15% 0.027 342.1)",
@@ -151,7 +151,7 @@
       "obsidian": {
         "role": "neutral",
         "displayName": "Obsidian",
-        "canonical": "#0e0a0c",
+        "canonical": "#0d0d0c",
         "oklch": "oklch(15.1% 0.008 346.5)",
         "tonalRamp": [
           "oklch(15% 0.008 346.5)",
@@ -167,7 +167,7 @@
       "text": {
         "role": "neutral",
         "displayName": "Warm Paper",
-        "canonical": "#f6efe9",
+        "canonical": "#f3f1ec",
         "oklch": "oklch(95.6% 0.011 63.4)",
         "tonalRamp": [
           "oklch(15% 0.011 63.4)",
@@ -183,7 +183,7 @@
       "muted": {
         "role": "neutral",
         "displayName": "Muted Mauve",
-        "canonical": "#d0c3c6",
+        "canonical": "#cdc9c2",
         "oklch": "oklch(82.9% 0.015 1.6)",
         "tonalRamp": [
           "oklch(15% 0.015 1.6)",
@@ -199,7 +199,7 @@
       "faint": {
         "role": "neutral",
         "displayName": "Faint Mauve",
-        "canonical": "#b3a4aa",
+        "canonical": "#ada9a2",
         "oklch": "oklch(73.3% 0.019 351.4)",
         "tonalRamp": [
           "oklch(15% 0.019 351.4)",
@@ -247,7 +247,7 @@
       "accent-ink": {
         "role": "primary",
         "displayName": "Accent Ink",
-        "canonical": "#0e0a0c",
+        "canonical": "#0d0d0c",
         "oklch": "oklch(15.1% 0.008 346.5)",
         "tonalRamp": [
           "oklch(15% 0.008 346.5)",
@@ -311,7 +311,7 @@
       "on-negative": {
         "role": "secondary",
         "displayName": "On Redstone",
-        "canonical": "#0e0a0c",
+        "canonical": "#0d0d0c",
         "oklch": "oklch(15.1% 0.008 346.5)",
         "tonalRamp": [
           "oklch(15% 0.008 346.5)",
@@ -359,7 +359,7 @@
       "pill-positive-bg": {
         "role": "secondary",
         "displayName": "Pill Positive Bg",
-        "canonical": "#2c3a2c",
+        "canonical": "#2b3a2a",
         "oklch": "oklch(33.1% 0.031 144.8)",
         "tonalRamp": [
           "oklch(15% 0.031 144.8)",
@@ -375,7 +375,7 @@
       "pill-negative-bg": {
         "role": "secondary",
         "displayName": "Pill Negative Bg",
-        "canonical": "#4a2a31",
+        "canonical": "#46292b",
         "oklch": "oklch(32.8% 0.049 5.9)",
         "tonalRamp": [
           "oklch(15% 0.049 5.9)",
@@ -391,7 +391,7 @@
       "pill-warning-bg": {
         "role": "secondary",
         "displayName": "Pill Warning Bg",
-        "canonical": "#47362a",
+        "canonical": "#453628",
         "oklch": "oklch(34.8% 0.032 56.7)",
         "tonalRamp": [
           "oklch(15% 0.032 56.7)",
@@ -407,7 +407,7 @@
       "pill-info-bg": {
         "role": "secondary",
         "displayName": "Pill Info Bg",
-        "canonical": "#2b3646",
+        "canonical": "#29343f",
         "oklch": "oklch(33% 0.032 257.7)",
         "tonalRamp": [
           "oklch(15% 0.032 257.7)",
@@ -1314,7 +1314,7 @@
   ],
   "narrative": {
     "northStar": "The Game's Own Side Menu",
-    "overview": "Beacon is a server dashboard that feels like a menu inside the game it controls: warm, tactile, built from blocks, instead of a terminal. It refuses both the near-black ops console it replaced and the cartoon kids' launcher. The material is chunky and physical: stone-slab cards with an ink outline and a small hard shadow, buttons that sink when pressed, a thin strip of grass, sky, dirt or stone on top of every card, and crisp pixel-art drawn on whole-pixel grids. The tone is friendly and a little playful but grown-up; it is never a kids' play site.\n\nDensity is calm and readable: one column on phones, a wide main column plus a 360px rail on desktop, 24px between cards. Everything a person reads or counts is set in a plain, sturdy sans (Public Sans) with tabular numerals; the pixel face (Pixelify Sans) is reserved for names, the things you would see on a game menu's tabs. One accent, beacon cyan, carries the primary action, focus, selection and the beacon's own light. Twilight (dark, warm plum) is the default; daytime (sky-blue ground, white cards, the same ink outlines) follows the system until the visitor picks a theme, and both meet WCAG AA.\n\nConfirmed rejections: no mascot faces, no jokes in sign-in, power confirmations or errors, no Mojang logos, textures, fonts or screenshots, and no near-black terminal look.",
+    "overview": "Beacon is a server dashboard that feels like a menu inside the game it controls: warm, tactile, built from blocks, instead of a terminal. It refuses both the near-black ops console it replaced and the cartoon kids' launcher. The material is chunky and physical: stone-slab cards with an ink outline and a small hard shadow, buttons that sink when pressed, a thin strip of grass, sky, dirt or stone on top of every card, and crisp pixel-art drawn on whole-pixel grids. The tone is friendly and a little playful but grown-up; it is never a kids' play site.\n\nDensity is calm and readable: one column on phones, a wide main column plus a 360px rail on desktop, 24px between cards. Everything a person reads or counts is set in a plain, sturdy sans (Public Sans) with tabular numerals; the pixel face (Pixelify Sans) is reserved for names, the things you would see on a game menu's tabs. One accent, beacon cyan, carries the primary action, focus, selection and the beacon's own light. Twilight (dark, neutral charcoal) is the default; daytime (sky-blue ground, white cards, the same ink outlines) follows the system until the visitor picks a theme, and both meet WCAG AA.\n\nConfirmed rejections: no mascot faces, no jokes in sign-in, power confirmations or errors, no Mojang logos, textures, fonts or screenshots, and no near-black terminal look.",
     "keyCharacteristics": [
       "Stone-slab cards: 2px ink outline, 10px corners, 4px hard offset shadow, a 6px material band on top.",
       "One accent (beacon cyan) and one primary button per state.",

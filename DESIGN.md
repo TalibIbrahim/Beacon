@@ -2,32 +2,32 @@
 name: Beacon
 description: A private control panel for one friends-only Minecraft server, built like a game's own side menu.
 colors:
-  ground-top: "#3a2b33"
-  ground: "#2a2026"
-  ground-bottom: "#221a1f"
-  surface: "#342a31"
-  raised: "#40353d"
-  border: "#4d4048"
-  rule: "#43373f"
-  control: "#92848c"
-  edge: "#66555f"
-  obsidian: "#0e0a0c"
-  text: "#f6efe9"
-  muted: "#d0c3c6"
-  faint: "#b3a4aa"
+  ground-top: "#302f2d"
+  ground: "#252422"
+  ground-bottom: "#1f1e1c"
+  surface: "#2e2d2b"
+  raised: "#3a3936"
+  border: "#4a4844"
+  rule: "#403e3b"
+  control: "#8e8a84"
+  edge: "#5f5c58"
+  obsidian: "#0d0d0c"
+  text: "#f3f1ec"
+  muted: "#cdc9c2"
+  faint: "#ada9a2"
   beacon-cyan: "#52d6e6"
   beacon-cyan-hover: "#74e2ef"
-  accent-ink: "#0e0a0c"
+  accent-ink: "#0d0d0c"
   focus: "#52d6e6"
   positive: "#86d672"
   negative: "#ff8080"
-  on-negative: "#0e0a0c"
+  on-negative: "#0d0d0c"
   warning: "#f3ae45"
   info: "#82c4ff"
-  pill-positive-bg: "#2c3a2c"
-  pill-negative-bg: "#4a2a31"
-  pill-warning-bg: "#47362a"
-  pill-info-bg: "#2b3646"
+  pill-positive-bg: "#2b3a2a"
+  pill-negative-bg: "#46292b"
+  pill-warning-bg: "#453628"
+  pill-info-bg: "#29343f"
   grass: "#5fae4e"
   grass-dark: "#3f7d33"
   dirt: "#8b5e3c"
@@ -207,7 +207,7 @@ components:
 
 Beacon is a server dashboard that feels like a menu inside the game it controls: warm, tactile, built from blocks, instead of a terminal. It refuses both the near-black ops console it replaced and the cartoon kids' launcher. The material is chunky and physical: stone-slab cards with an ink outline and a small hard shadow, buttons that sink when pressed, a thin strip of grass, sky, dirt or stone on top of every card, and crisp pixel-art drawn on whole-pixel grids. The tone is friendly and a little playful but grown-up; it is never a kids' play site.
 
-Density is calm and readable: one column on phones, a wide main column plus a 360px rail on desktop, 24px between cards. Everything a person reads or counts is set in a plain, sturdy sans (Public Sans) with tabular numerals; the pixel face (Pixelify Sans) is reserved for names, the things you would see on a game menu's tabs. One accent, beacon cyan, carries the primary action, focus, selection and the beacon's own light. Twilight (dark, warm plum) is the default; daytime (sky-blue ground, white cards, the same ink outlines) follows the system until the visitor picks a theme, and both meet WCAG AA.
+Density is calm and readable: one column on phones, a wide main column plus a 360px rail on desktop, 24px between cards. Everything a person reads or counts is set in a plain, sturdy sans (Public Sans) with tabular numerals; the pixel face (Pixelify Sans) is reserved for names, the things you would see on a game menu's tabs. One accent, beacon cyan, carries the primary action, focus, selection and the beacon's own light. Twilight (dark, neutral charcoal) is the default; daytime (sky-blue ground, white cards, the same ink outlines) follows the system until the visitor picks a theme, and both meet WCAG AA.
 
 Confirmed rejections: no mascot faces, no jokes in sign-in, power confirmations or errors, no Mojang logos, textures, fonts or screenshots, and no near-black terminal look.
 
@@ -216,12 +216,12 @@ Confirmed rejections: no mascot faces, no jokes in sign-in, power confirmations 
 - One accent (beacon cyan) and one primary button per state.
 - Pixelify Sans for names only; Public Sans with tabular numerals for everything read or counted.
 - Pixel art as inline SVG on small integer grids, rendered crisp (`image-rendering: pixelated`).
-- Warm twilight dark by default, daytime light on request; both AA, 44px touch targets.
+- Neutral dark (twilight) by default, daytime light on request; both AA, 44px touch targets.
 - One motion grammar: short ease-out, transform and opacity only, off under reduced motion.
 
 ## Colors
 
-A warm plum twilight (or daytime sky) ground, stone-toned surfaces, one bright beacon cyan, and Minecraft-flavoured material colours that live only in bands, blocks and meters. Every colour is a CSS custom property in `src/index.css`; the `day-*` tokens are the light theme's values for the same variables.
+A neutral charcoal twilight (or daytime sky) ground, stone-toned surfaces, one bright beacon cyan, and Minecraft-flavoured material colours that live only in bands, blocks and meters. Every colour is a CSS custom property in `src/index.css`; the `day-*` tokens are the light theme's values for the same variables.
 
 ### Primary
 - **Beacon Cyan** (`beacon-cyan`; daytime `day-beacon-cyan`): the primary button's fill, the focus ring in twilight, text selection (35% mix), the caret, the outline around the current boot block. It is the beacon's own light, so it also appears as **Beam** in the pixel beacon's beam, the lit boot-track rail and the app mark. Text on it is always **Accent Ink** (near black), never white.
@@ -245,7 +245,7 @@ A warm plum twilight (or daytime sky) ground, stone-toned surfaces, one bright b
 - **Ground Top / Ground / Ground Bottom**: the page's vertical gradient (top colour to ground by 420px, then to bottom). Ground Top also fills the sticky header and the browser's `theme-color`.
 - **Surface** (`surface`; daytime white): card fill.
 - **Raised** (`raised`): secondary buttons, inputs, meter troughs, hover fills, the beacon's glass.
-- **Edge** (`edge`): the 2px outline on cards, buttons, pills, tiles and avatars. A warm rim in twilight, ink in daytime.
+- **Edge** (`edge`): the 2px outline on cards, buttons, pills, tiles and avatars. A light grey rim in twilight, ink in daytime.
 - **Obsidian** (`obsidian`): every hard shadow and every pixel-art outline.
 - **Rule** (`rule`): 2px row dividers inside cards. **Border** (`border`): disabled outlines and dashed empty-state boxes. **Control** (`control`): input outlines, empty boot slots, the unlit rail, scrollbars.
 - **Text / Muted / Faint**: primary text, secondary lines, labels and timestamps. All three meet AA on Surface in both themes.
