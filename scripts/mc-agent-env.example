@@ -19,6 +19,8 @@ UPLOAD_URL=
 # Minecraft-Premium's private IP and port, for the status probe (scripts/mc-probe.py)
 # MC_HOST=10.0.0.16
 # MC_PORT=25565
+# Where a restore keeps the replaced world on Minecraft-Premium (the last 2 are kept)
+# PRE_RESTORE_DIR=/home/ubuntu/mc-pre-restore
 # RCON (TPS, MSPT, full player list). Same password as rcon.password on Minecraft-Premium.
 # Only arm-free may reach port 25575: see the README, "Set up RCON".
 # RCON_PASSWORD=

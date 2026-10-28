@@ -2,6 +2,7 @@
 
 import { getMaskedActor } from '../_lib/auth';
 import { emitEvents, NewEvent } from '../_lib/events';
+import { activeRestore } from '../_lib/restore';
 import { addActivityLog } from '../_lib/log';
 import { getMinecraftStatus } from '../_lib/mcstatus';
 import {
@@ -54,6 +55,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
+  }
+
+  // 0. No power actions while a restore is copying the world onto the VM
+  if (env.DASH_DB) {
+    const restoring = await activeRestore(env.DASH_DB).catch(() => null);
+    if (restoring) {
+      return new Response(
+        JSON.stringify({ error: 'A restore is in progress. Power actions are blocked until it finishes.' }),
+        { status: 409, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
   }
 
   // 1. Check 30-second power action cooldown

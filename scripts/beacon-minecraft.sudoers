@@ -1,0 +1,17 @@
+# /etc/sudoers.d/beacon-minecraft  (on Minecraft-Premium; mode 0440, owner root)
+#
+# Lets the ubuntu user stop and start the Minecraft service without a password, and nothing else.
+# arm-free's mc-restore.sh uses exactly: sudo -n /usr/bin/systemctl stop minecraft
+#
+# Install (check it with visudo before it goes live; a broken sudoers file can lock sudo out):
+#   sudo -l                                   # first: see how sudo works for ubuntu today
+#   sudo cp beacon-minecraft.sudoers /tmp/beacon-minecraft
+#   sudo visudo -cf /tmp/beacon-minecraft     # must say "parsed OK"
+#   sudo install -m 0440 -o root -g root /tmp/beacon-minecraft /etc/sudoers.d/beacon-minecraft
+#   sudo -l | grep minecraft                  # shows the two commands below
+#
+# Oracle's Ubuntu images also give ubuntu passwordless sudo for everything (cloud-init's
+# /etc/sudoers.d/90-cloud-init-users). This file does not depend on that; if you remove that blanket
+# rule, these two commands keep working.
+
+ubuntu ALL=(root) NOPASSWD: /usr/bin/systemctl stop minecraft, /usr/bin/systemctl start minecraft

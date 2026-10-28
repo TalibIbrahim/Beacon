@@ -3,6 +3,7 @@
 // sends SOFTSTOP to OCI and writes an entry to the activity log.
 
 import { emitEvents } from '../../../functions/_lib/events';
+import { activeRestore } from '../../../functions/_lib/restore';
 import { addActivityLog } from '../../../functions/_lib/log';
 import { getMinecraftStatus } from '../../../functions/_lib/mcstatus';
 import {
@@ -34,6 +35,15 @@ const ONLINE_SINCE_KEY = 'online_since';
 async function handleAutoStopCheck(env: AutoStopEnv): Promise<string> {
   const thresholdMinutes = parseInt(env.AUTO_STOP_MINUTES || '30', 10);
   const thresholdMs = thresholdMinutes * 60 * 1000;
+
+  // 0. Never stop the VM while a restore is copying the world onto it
+  if (env.DASH_DB) {
+    const restoring = await activeRestore(env.DASH_DB).catch(() => null);
+    if (restoring) {
+      await env.DASH_KV.delete(EMPTY_SINCE_KEY);
+      return `Restore #${restoring.id} in progress. No action taken.`;
+    }
+  }
 
   // 1. Check VM state from OCI
   const vmState = await getOciInstanceLifecycleState(env as any);

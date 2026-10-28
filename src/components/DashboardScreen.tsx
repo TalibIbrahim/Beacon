@@ -46,18 +46,21 @@ const Freshness: React.FC<{ updatedAt: number | null; failed: boolean }> = ({ up
 
 interface PowerControlsProps {
   phase: Phase;
+  // A restore is copying the world onto the VM: the server refuses power actions until it is done
+  restoring: boolean;
   cooldown: number;
   loadingAction: PowerAction | null;
   onAction: (action: PowerAction) => void;
 }
 
-const PowerControls: React.FC<PowerControlsProps> = ({ phase, cooldown, loadingAction, onAction }) => {
+const PowerControls: React.FC<PowerControlsProps> = ({ phase, restoring, cooldown, loadingAction, onAction }) => {
   const busy = loadingAction !== null;
-  const blocked = busy || cooldown > 0;
+  const blocked = busy || cooldown > 0 || restoring;
   const vmUp = phase === 'online' || phase === 'loading';
 
-  const note =
-    cooldown > 0
+  const note = restoring
+    ? 'Restore in progress'
+    : cooldown > 0
       ? `Next action in ${cooldown}s`
       : phase === 'booting' || phase === 'loading'
       ? 'Starting up…'
@@ -152,11 +155,13 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
   // while the tab is hidden
   const phase: Phase | null = status ? getPhase(status) : null;
   const backupState = status?.backupJob?.request?.state;
+  const restoreState = status?.backupJob?.restore?.state;
+  const restoring = restoreState === 'pending' || restoreState === 'running';
   const pollMsRef = useRef(POLL_SLOW_MS);
   pollMsRef.current =
     phase !== null && isTransitional(phase)
       ? POLL_FAST_MS
-      : backupState === 'pending' || backupState === 'running'
+      : backupState === 'pending' || backupState === 'running' || restoring
       ? POLL_BACKUP_MS
       : POLL_SLOW_MS;
 
@@ -290,7 +295,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
             </p>
           </div>
           {status && phase && phase !== 'unknown' && (
-            <PowerControls phase={phase} cooldown={cooldown} loadingAction={loadingAction} onAction={handleAction} />
+            <PowerControls phase={phase} restoring={restoring} cooldown={cooldown} loadingAction={loadingAction} onAction={handleAction} />
           )}
         </div>
 

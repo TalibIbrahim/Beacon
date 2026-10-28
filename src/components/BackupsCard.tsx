@@ -3,6 +3,7 @@ import { DatabaseBackup, Loader2 } from 'lucide-react';
 import { ApiError, requestBackup } from '../api';
 import { formatBytes, formatDate, formatRelative } from '../format';
 import { BackupJobInfo } from '../types';
+import { RestorePoints } from './RestorePoints';
 
 interface BackupsCardProps {
   job?: BackupJobInfo;
@@ -61,6 +62,9 @@ const EMPTY_JOB: BackupJobInfo = {
   request: null,
   cooldownSeconds: 0,
   overdue: false,
+  snapshots: [],
+  restore: null,
+  restoreBlocked: null,
 };
 
 export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onRequested, onToast }) => {
@@ -253,6 +257,8 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
       )}
 
       {!job.configured && job.message && <p className="mx-5 mb-5 -mt-1 text-muted">{job.message}</p>}
+
+      <RestorePoints job={job} onRequested={onRequested} onToast={onToast} />
 
       <p className="px-5 py-3 border-t-2 border-rule text-xs text-faint">
         arm-free copies Minecraft-Premium every 30 minutes and uploads the world save, so the download works while

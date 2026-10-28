@@ -155,6 +155,21 @@ probe_fields() {
   esac
 }
 
+# The daily snapshots in ~/mc-backup/daily (newest 60), for Beacon's restore list. Only plain file
+# names are listed; Beacon re-validates them and mc-restore.sh re-checks them against these files.
+snapshot_fields() {
+  [ -d "$BACKUP_ROOT/daily" ] || return 0
+  local name size mtime first=1 items=""
+  while IFS=$'\t' read -r mtime size name; do
+    [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]] || continue
+    [[ "$size" =~ ^[0-9]+$ ]] || continue
+    [ "$first" -eq 1 ] || items+=","
+    first=0
+    items+="$(printf '{"name":"%s","sizeBytes":%s,"mtime":"%s"}' "$name" "$size" "$(date -u -d "@${mtime%.*}" +%Y-%m-%dT%H:%M:%SZ)")"
+  done < <(find "$BACKUP_ROOT/daily" -maxdepth 1 -type f -printf '%T@\t%s\t%f\n' 2>/dev/null | sort -rn | head -n 60)
+  printf ',"snapshots":[%s]' "$items"
+}
+
 heartbeat_json() {
   local busy="$1" last size cron sched
   last="$(last_success_iso)"
@@ -165,8 +180,36 @@ heartbeat_json() {
     cron=null
   fi
   crontab -l 2>/dev/null | grep -Eq '^[^#]*mc-agent\.sh[[:space:]]+scheduled' && sched=true || sched=false
-  printf '{"lastSuccess":%s,"archiveBytes":%s,"busy":%s,"cronActive":%s,"scheduleInstalled":%s%s}' \
-    "$(json_str "$last")" "${size:-null}" "$busy" "$cron" "$sched" "$(probe_fields)"
+  printf '{"lastSuccess":%s,"archiveBytes":%s,"busy":%s,"cronActive":%s,"scheduleInstalled":%s%s%s}' \
+    "$(json_str "$last")" "${size:-null}" "$busy" "$cron" "$sched" "$(probe_fields)" "$(snapshot_fields)"
+}
+
+report_restore() { # id ok [error]
+  beacon_ready || return 0
+  local body
+  body="$(printf '{"kind":"restore","restoreId":%s,"ok":%s,"finishedAt":"%s","error":%s}' \
+    "$1" "$2" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$(json_str "${3:-}")")"
+  if api /api/agent/report "$body" >/dev/null; then
+    log "Reported restore $1 to Beacon: ok=$2${3:+ ($3)}"
+  else
+    log "Could not send the restore report to Beacon."
+  fi
+}
+
+# A restore Beacon handed over: mc-restore.sh re-checks the name and does fixed steps only
+run_restore() { # id name (the caller holds the lock on fd 9)
+  local id="$1" name="$2" out rc last
+  export BEACON_LOCK_HELD=1
+  log "Beacon asked to restore $name (job $id)."
+  out="$("$SCRIPT_DIR/mc-restore.sh" "$name" 2>&1)"
+  rc=$?
+  printf '%s\n' "$out"
+  last="$(printf '%s\n' "$out" | tail -n 1)"
+  if [ "$rc" -eq 0 ] && [[ "$last" == OK:* ]]; then
+    report_restore "$id" true
+  else
+    report_restore "$id" false "${last#FAILED: }"
+  fi
 }
 
 report() { # trigger ok [error]
@@ -297,15 +340,30 @@ case "$MODE" in
       log "Poll failed: Beacon unreachable or it refused the token."
       exit 1
     fi
-    [[ "$resp" == *'"backup":true'* ]] || exit 0
+    want_backup=0
+    [[ "$resp" == *'"backup":true'* ]] && want_backup=1
+    # A restore claim: only an id and a plain file name are accepted from the answer
+    restore_id=""
+    restore_name=""
+    if [[ "$resp" =~ \"restore\":\{\"id\":([0-9]{1,15}),\"snapshot\":\"([A-Za-z0-9][A-Za-z0-9._-]{0,127})\"\} ]]; then
+      restore_id="${BASH_REMATCH[1]}"
+      restore_name="${BASH_REMATCH[2]}"
+    fi
+    [ "$want_backup" -eq 1 ] || [ -n "$restore_id" ] || exit 0
 
-    log "Beacon asked for a backup."
     exec 9>>"$LOCK_FILE"
     if ! flock -w "$LOCK_WAIT" 9; then
-      report requested false "Timed out waiting for another backup to finish."
+      [ "$want_backup" -eq 1 ] && report requested false "Timed out waiting for another backup to finish."
+      [ -n "$restore_id" ] && report_restore "$restore_id" false "Timed out waiting for a backup to finish. Nothing was changed."
       exit 1
     fi
-    run_backup requested
+    if [ "$want_backup" -eq 1 ]; then
+      log "Beacon asked for a backup."
+      run_backup requested
+    fi
+    if [ -n "$restore_id" ]; then
+      run_restore "$restore_id" "$restore_name"
+    fi
     ;;
   scheduled)
     exec 9>>"$LOCK_FILE"

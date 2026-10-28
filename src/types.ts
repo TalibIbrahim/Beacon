@@ -18,7 +18,9 @@ export interface ActivityLogEntry {
     | 'FAILED_LOGIN'
     | 'BACKUP_DOWNLOAD'
     | 'BACKUP_REQUEST'
-    | 'BACKUP_RUN';
+    | 'BACKUP_RUN'
+    | 'RESTORE_REQUEST'
+    | 'RESTORE_RUN';
   result: 'SUCCESS' | 'FAILED';
   actor: string;
   details?: string;
@@ -67,6 +69,21 @@ export interface BackupJobInfo {
   } | null;
   cooldownSeconds: number;
   overdue: boolean;
+  snapshots: Array<{ name: string; sizeBytes: number; mtime: string }>;
+  restore: RestoreInfo | null;
+  restoreBlocked: string | null;
+}
+
+export type RestoreState = 'pending' | 'running' | 'done' | 'failed';
+
+export interface RestoreInfo {
+  id: number;
+  snapshot: string;
+  state: RestoreState;
+  requestedAt: string;
+  startedAt?: string;
+  finishedAt?: string;
+  error?: string;
 }
 
 export interface ComputeUsage {

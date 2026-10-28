@@ -34,18 +34,32 @@ The screenshots use made-up data (a documentation IP address and invented player
 ## How it fits together
 
 ```
- Browser ──HTTPS──▶ Cloudflare Worker (static React app + Functions in functions/)
-                        │  KV: sessions, rate limits, cooldown, activity log, caches
-                        │  D1: arm-free's heartbeat, the "Backup now" request, the last backup result
-                        ├──▶ Oracle Cloud API (signed requests): VM state, power, public IP
-                        ├──▶ mcsrvstat.us: Minecraft status and players
-                        └──▶ R2 bucket / Object Storage link: world-latest.tar.gz
-                                                                  ▲
- arm-free (always on) ── mc-agent.sh ──HTTPS──▶ /api/agent/*      │ PUT world-latest.tar.gz
-      │                  pack-and-upload.sh ──────────────────────┘
-      └── SSH: rsync pull, tmux save-off / save-all flush / save-on ──▶ Minecraft-Premium
+ Browser ──HTTPS──▶ Cloudflare Worker "beacon" (React app + Functions in functions/)
+                        │  KV  DASH_KV: sessions, rate limits, cooldowns, activity log, caches
+                        │  D1  DASH_DB: agent snapshot (≤1 write/min), "Backup now", events,
+                        │               playtime, daily snapshot list, restore jobs
+                        ├──▶ Oracle Cloud API (signed): VM state, power, public IP
+                        ├──▶ mcsrvstat.us: public Minecraft status and players
+                        ├──▶ Discord webhook (waitUntil, de-duplicated, ≤5 posts/min)
+                        └──▶ Object Storage read link: world-latest.tar.gz (download redirect)
 
- Oracle VM ── scripts/backup-world.sh ──▶ R2 / Object Storage / local folder for serve-backup.sh
+ Worker "beacon-auto-stop" (cron, 10 min) ──▶ Oracle soft stop when idle; same KV + D1; Discord
+
+ arm-free (always on, outbound HTTPS only)
+   cron ─ mc-agent.sh poll (1 min) ──HTTPS + Bearer──▶ POST /api/agent/poll
+   │        heartbeat + mc-probe.py status + snapshot list    ◀── { backup, restore: {id, snapshot} | null }
+   │        └─ mc-probe.py ── private IP ──▶ Minecraft-Premium :25565 (status ping)
+   │                                       ──▶ :25575 RCON (tps, mspt, list; arm-free only)
+   │                                       ──▶ SSH: ps rss/etimes, MemTotal
+   cron ─ mc-agent.sh scheduled (30 min), or a claimed "Backup now"   [flock ~/mc-backup/.lock]
+   │        SSH tmux save-off/flush ─ ~/mc-backup.sh rsync pull ─ save-on
+   │        pack-and-upload.sh ── PUT write link ──▶ Oracle Object Storage (world-latest.tar.gz)
+   └─ a claimed restore ─ mc-restore.sh                              [same lock]
+            name checked against ~/mc-backup/daily ─ sudo -n systemctl stop minecraft (SSH)
+            ─ current world → ~/mc-pre-restore/<time> ─ rsync snapshot in ─ Minecraft stays stopped
+   every result ──▶ POST /api/agent/report
+
+ Oracle VM (legacy) ── scripts/backup-world.sh ──▶ R2 / Object Storage / serve-backup.sh folder
 ```
 
 - **Frontend:** React 18, Vite, Tailwind CSS, self-hosted Public Sans and Pixelify Sans (titles and the
@@ -329,7 +343,7 @@ sends `save-on` again. To do it by hand on Minecraft-Premium: `tmux send-keys -t
 
 | Path | |
 |---|---|
-| `~/beacon/mc-agent.sh`, `~/beacon/pack-and-upload.sh` | The two scripts (`chmod 700`) |
+| `~/beacon/mc-agent.sh`, `pack-and-upload.sh`, `mc-probe.py`, `mc-restore.sh` | The agent's scripts (`chmod 700`), all in one folder |
 | `~/.config/beacon/agent.env` | `BEACON_URL`, `AGENT_TOKEN`, `UPLOAD_URL` (`chmod 600`; the scripts refuse to run otherwise). See `scripts/mc-agent-env.example` |
 | `~/mc-backup/.lock` | flock shared by every backup |
 | `~/mc-backup/upload/world-latest.tar.gz` | The last archive built, plus `.uploaded_stamp`, the backup it came from |
@@ -349,6 +363,7 @@ them.
 | `MC_REMOTE_DIR` | `/home/ubuntu/minecraft` | Server folder on Minecraft-Premium (for `logs/latest.log`) |
 | `BACKUP_ROOT` / `BACKUP_CMD` | `~/mc-backup` / `~/mc-backup.sh` | Your existing backup folder and script |
 | `MC_HOST` / `MC_PORT` | `10.0.0.16` / `25565` | Where `mc-probe.py` pings Minecraft (the private IP, so it works without the public address) |
+| `PRE_RESTORE_DIR` | `/home/ubuntu/mc-pre-restore` | Where a restore keeps the replaced world on Minecraft-Premium (last 2) |
 | `RCON_PASSWORD` / `RCON_PORT` | none / `25575` | RCON for TPS, MSPT and the full player list (see [Set up RCON](#set-up-rcon-only-arm-free-may-reach-it)). Empty: no RCON |
 
 ### Set it up
@@ -379,8 +394,8 @@ them.
    sudo apt-get update && sudo apt-get install -y cron curl
    sudo systemctl enable --now cron
    mkdir -p ~/beacon ~/.config/beacon
-   # from your PC: scp scripts/mc-agent.sh scripts/pack-and-upload.sh ubuntu@<arm-free-public-ip>:beacon/
-   chmod 700 ~/beacon/*.sh
+   # from your PC: scp scripts/mc-agent.sh scripts/pack-and-upload.sh scripts/mc-probe.py scripts/mc-restore.sh ubuntu@<arm-free-public-ip>:beacon/
+   chmod 700 ~/beacon/*.sh ~/beacon/*.py
    (umask 077 && nano ~/.config/beacon/agent.env)   # BEACON_URL, AGENT_TOKEN, UPLOAD_URL
    chmod 600 ~/.config/beacon/agent.env
    ```
@@ -480,6 +495,53 @@ hostname -I
 
    and from anywhere else (your PC) that the port is closed:
    `Test-NetConnection <premium public IP> -Port 25575` must say `TcpTestSucceeded : False`.
+
+## Backup history and restore points
+
+`mc-agent.sh` reports the files in `~/mc-backup/daily` (name, size, time; newest 60) with each
+heartbeat, and the **Backups** panel lists them under **Restore points**. **Restore** replaces the
+active world on Minecraft-Premium with the one from a snapshot, after you type `RESTORE`.
+
+Beacon refuses a restore unless all of these hold, checked on the server when you ask:
+
+- the snapshot is in arm-free's latest list, and arm-free is responding;
+- Minecraft-Premium is running (the world is copied onto it) and nobody is online, according to both
+  arm-free's probe and mcsrvstat;
+- no backup is running and no other restore is pending or running.
+
+While a restore is active, Start / Stop / Restart are refused and the auto-stop worker leaves the VM
+alone. The request, the result and both Discord alerts go to the activity log.
+
+What arm-free does (`scripts/mc-restore.sh`, fixed steps, under the same lock as every backup):
+
+1. Accepts the file name only if it is exactly the name of a file in `~/mc-backup/daily`; nothing in
+   it is ever run. Reads `level-name` from Minecraft-Premium's `server.properties`.
+2. Probes the server once more and stops if anyone has joined; extracts only `<level>`,
+   `<level>_nether` and `<level>_the_end` from the snapshot. Plugins and config are never touched.
+3. Stops Minecraft with `sudo -n /usr/bin/systemctl stop minecraft` (the service's own `ExecStop`
+   saves and quits), then waits until no java process and no tmux session `mc` remain.
+4. Moves the current three folders to `~/mc-pre-restore/<time>/` on Minecraft-Premium, outside the
+   server folder so backups do not copy them, and keeps the last 2.
+5. `rsync`s the snapshot's folders into place; if that fails, the previous world is moved back.
+6. Leaves Minecraft stopped and reports. Use **Restart** in Beacon when you want it back (the VM
+   reboots and `minecraft.service` starts with it).
+
+A request nobody picks up within 10 minutes, or a restore with no result after 90 minutes, shows as
+failed. To try a restore without changing anything: `~/beacon/mc-restore.sh --check <file name>`.
+
+### Let the agent stop Minecraft (sudoers drop-in)
+
+The restore needs `ubuntu` on Minecraft-Premium to stop the service without a password, and nothing
+more. `scripts/beacon-minecraft.sudoers` allows exactly `systemctl stop minecraft` and
+`systemctl start minecraft`. Check how sudo works there today, then install it through `visudo`:
+
+```bash
+sudo -l                                            # Oracle images usually allow ubuntu everything already
+scp scripts/beacon-minecraft.sudoers ubuntu@<premium>:/tmp/beacon-minecraft   # from your PC (via arm-free)
+sudo visudo -cf /tmp/beacon-minecraft              # must print "parsed OK"
+sudo install -m 0440 -o root -g root /tmp/beacon-minecraft /etc/sudoers.d/beacon-minecraft
+sudo -l | grep minecraft
+```
 
 ## Discord alerts
 
@@ -582,6 +644,18 @@ stop event and de-duplicate it with the dashboard's.
 
 ## Security
 
+- **Restores** need a session, the CSRF checks and a typed `RESTORE`, and are refused while anyone is
+  online, while a backup runs, or while another restore is active. Beacon sends arm-free only a job
+  id and a file name; arm-free accepts the name only if it matches a file it has and runs a fixed
+  script. Power actions and auto-stop are blocked while a restore runs. On Minecraft-Premium, sudo
+  is needed only for `systemctl stop|start minecraft` (`scripts/beacon-minecraft.sudoers`).
+- **RCON** is reachable from arm-free's private IP only (OCI ingress rule plus iptables), its password
+  lives only in arm-free's `chmod 600` env file and `server.properties`, and the downloadable archive
+  carries `server.properties` with `rcon.password` blanked.
+- **Discord** messages carry no IP hashes or tokens; player names are escaped and mentions disabled.
+  The webhook URL is a Worker secret and is never logged.
+- **Agent data** is validated strictly: unknown fields, wrong types and oversized lists are rejected.
+
 - **One shared password**, stored as a PBKDF2-SHA256 hash and checked in constant time.
 - **Sessions** are HMAC-signed `__Host-` cookies: `HttpOnly`, `Secure`, `SameSite=Strict`, 8 hours.
 - **Brute force:** 5 wrong passwords lock that IP for 15 minutes; 25 across all IPs lock sign-in for
@@ -616,8 +690,9 @@ stop event and de-duplicate it with the dashboard's.
 | `GET /api/backup` | session | Where the world save is and whether it can be downloaded |
 | `GET /api/backup?download=1` | session | The download (stream from R2, or a redirect) |
 | `POST /api/backup/request` | session | "Backup now": `{}` → `{ state: "pending" }`; 409 if one is pending or running, 429 with `retryAfter` during the 5-minute cooldown |
-| `POST /api/agent/poll` | agent token | Heartbeat `{ lastSuccess?, archiveBytes?, busy?, cronActive?, scheduleInstalled? }` → `{ backup: true \| false }` |
-| `POST /api/agent/report` | agent token | `{ trigger: "requested" \| "scheduled", ok, finishedAt, sizeBytes?, error? }` → `{ recorded: true }` |
+| `POST /api/restore/request` | session | `{ snapshot, confirm: "RESTORE" }` → `{ id, state: "pending" }`; 409 with the reason when a restore is not possible right now |
+| `POST /api/agent/poll` | agent token | Heartbeat `{ lastSuccess?, archiveBytes?, busy?, cronActive?, scheduleInstalled?, minecraft?, health?, snapshots? }`, validated strictly (unknown fields rejected, 8 KB) → `{ backup: true \| false, restore: { id, snapshot } \| null }` |
+| `POST /api/agent/report` | agent token | Backup: `{ trigger, ok, finishedAt, sizeBytes?, error? }`; restore: `{ kind: "restore", restoreId, ok, finishedAt, error? }` → `{ recorded }` |
 | `POST /api/logout` | session | Clears the cookie |
 
 ## Project layout
@@ -630,7 +705,9 @@ src/                  React app
   components/         screens and panels
   serverState.ts      VM + Minecraft state → what the screen says
 scripts/              hash-password, backup-world.sh, serve-backup.sh,
-                      mc-agent.sh + pack-and-upload.sh (arm-free)
+                      arm-free: mc-agent.sh, pack-and-upload.sh, mc-probe.py, mc-restore.sh
+                      Minecraft-Premium: beacon-minecraft.sudoers
+migrations/           D1 schema (npx wrangler d1 migrations apply beacon-agent --remote)
 workers/auto-stop/    idle shutdown cron worker
 public/               fonts (Public Sans, OFL), favicon, security headers
 ```

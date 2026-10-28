@@ -10,6 +10,7 @@ import {
   Square,
   TimerOff,
   Archive,
+  ArchiveRestore,
 } from 'lucide-react';
 import { formatDate, formatRelative } from '../format';
 import { ActivityLogEntry } from '../types';
@@ -39,6 +40,10 @@ function describe(entry: ActivityLogEntry): string {
       return 'Asked for a backup';
     case 'BACKUP_RUN':
       return 'Backup from arm-free';
+    case 'RESTORE_REQUEST':
+      return 'Asked for a restore';
+    case 'RESTORE_RUN':
+      return 'Restore from a snapshot';
     default:
       return entry.action;
   }
@@ -65,6 +70,10 @@ function iconFor(entry: ActivityLogEntry): { Icon: LucideIcon; tint: string } {
       return { Icon: DatabaseBackup, tint: 'bg-raised text-muted' };
     case 'BACKUP_RUN':
       return { Icon: Archive, tint: 'bg-pill-positive text-positive' };
+    case 'RESTORE_REQUEST':
+      return { Icon: ArchiveRestore, tint: 'bg-pill-warning text-warning' };
+    case 'RESTORE_RUN':
+      return { Icon: ArchiveRestore, tint: 'bg-pill-positive text-positive' };
     default:
       return { Icon: Square, tint: 'bg-raised text-muted' };
   }

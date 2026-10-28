@@ -122,6 +122,14 @@ export async function requestBackup(): Promise<{ state: 'pending' }> {
   });
 }
 
+// Restore the world from a daily snapshot on arm-free; the server re-checks every condition
+export async function requestRestore(snapshot: string): Promise<{ id: number; state: 'pending' }> {
+  return await apiFetch<{ id: number; state: 'pending' }>('/api/restore/request', {
+    method: 'POST',
+    body: JSON.stringify({ snapshot, confirm: 'RESTORE' }),
+  });
+}
+
 // The download itself is a plain link to this URL (see BackupCard): the browser follows the
 // stream or redirect natively, so there is no CORS and no buffering of a large file in memory.
 export const BACKUP_DOWNLOAD_URL = '/api/backup?download=1';

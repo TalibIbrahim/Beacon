@@ -7,6 +7,7 @@ import { readAgentJson } from '../../_lib/agent';
 import { emitEvents, NewEvent } from '../../_lib/events';
 import { getOciPublicIp } from '../../_lib/oci';
 import { playerChanges } from '../../_lib/players';
+import { claimRestore } from '../../_lib/restore';
 import { claimBackup, mergeSnapshot, readSnapshot, SNAPSHOT_MIN_INTERVAL_MS, StoredSnapshot, writeSnapshot } from '../../_lib/snapshot';
 import { Env } from '../../_lib/types';
 
@@ -60,7 +61,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   try {
     const now = Date.now();
     const prev = await readSnapshot(db);
-    const statements: D1PreparedStatement[] = [claimBackup(db, now)];
+    const statements: D1PreparedStatement[] = [claimBackup(db, now), claimRestore(db, now)];
 
     // At most one snapshot write every 50 seconds, however often the agent calls
     let next: StoredSnapshot | null = null;
@@ -74,14 +75,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       playerEvents = players.events;
     }
 
-    const [claim] = await db.batch(statements);
+    const [claim, restoreClaim] = await db.batch(statements);
+    const restore = (restoreClaim.results[0] as { id: number; snapshot: string } | undefined) ?? null;
+    if (restore) {
+      waitUntil(
+        emitEvents(env, [
+          { type: 'restore_started', source: 'agent', dedupeKey: `restore:${restore.id}:start`, dedupeWindowMs: 24 * 60 * 60 * 1000, details: { snapshot: restore.snapshot } },
+        ])
+      );
+    }
 
     // Discord runs after the answer is sent, so it never slows the poll
     if (next) {
       const changed = next;
       waitUntil(serverEvents(env, prev, changed).then((events) => emitEvents(env, [...events, ...playerEvents], now)));
     }
-    return json({ backup: (claim.meta.changes ?? 0) === 1 });
+    // Flags and ids only: the agent re-checks the snapshot name against its own files
+    return json({ backup: (claim.meta.changes ?? 0) === 1, restore: restore ? { id: restore.id, snapshot: restore.snapshot } : null });
   } catch (err) {
     console.error('Agent poll failed:', err instanceof Error ? err.message : err);
     return json({ error: 'Could not record the heartbeat' }, 500);

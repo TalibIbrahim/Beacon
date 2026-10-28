@@ -8,6 +8,7 @@ import { clearBackupProbeCache } from '../../_lib/backup';
 import { recordRunReport } from '../../_lib/backupjob';
 import { emitEvents } from '../../_lib/events';
 import { addActivityLog } from '../../_lib/log';
+import { finishRestore } from '../../_lib/restore';
 import { Env } from '../../_lib/types';
 
 const json = (body: unknown, status = 200) =>
@@ -31,7 +32,36 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (err instanceof PayloadError) return json({ error: err.message }, 400);
     throw err;
   }
-  if (report.kind !== 'backup') return json({ error: 'Restore reports are not accepted yet' }, 400);
+  if (report.kind === 'restore') {
+    try {
+      const row = await finishRestore(env.DASH_DB!, report.restoreId!, report.ok, report.finishedAt, report.error);
+      if (row) {
+        if (env.DASH_KV) {
+          await addActivityLog(env.DASH_KV, {
+            action: 'RESTORE_RUN',
+            result: report.ok ? 'SUCCESS' : 'FAILED',
+            actor: 'agent',
+            details: report.ok ? row.snapshot : report.error ?? undefined,
+          });
+        }
+        waitUntil(
+          emitEvents(env, [
+            {
+              type: 'restore_finished',
+              source: 'agent',
+              dedupeKey: `restore:${row.id}:finish`,
+              dedupeWindowMs: 24 * 60 * 60 * 1000,
+              details: { ok: report.ok, snapshot: row.snapshot, reason: report.error ?? undefined },
+            },
+          ])
+        );
+      }
+      return json({ recorded: Boolean(row) });
+    } catch (err) {
+      console.error('Restore report failed:', err instanceof Error ? err.message : err);
+      return json({ error: 'Could not record the report' }, 500);
+    }
+  }
 
   const { trigger, ok, finishedAt, sizeBytes, error } = report;
 

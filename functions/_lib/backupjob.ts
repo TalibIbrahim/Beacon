@@ -8,6 +8,7 @@
 // Every table here holds a single row (id = 1) except agent_rate. The heartbeat row itself is
 // written by snapshot.ts.
 
+import { latestRestore } from './restore';
 import { BackupJobInfo, BackupRequestState, BackupTrigger, Env, VmState } from './types';
 
 export const HEARTBEAT_STALE_MS = 3 * 60 * 1000;
@@ -165,7 +166,8 @@ const EMPTY_AGENT: BackupJobInfo['agent'] = {
 
 export async function getBackupJobInfo(
   env: Env,
-  ctx: { vmState: VmState; onlineSince: string | null }
+  // playersOnline: from the public status check (mcsrvstat), as a second opinion on the agent's count
+  ctx: { vmState: VmState; onlineSince: string | null; playersOnline: number }
 ): Promise<BackupJobInfo> {
   if (!isAgentConfigured(env)) {
     const missing = [!env.DASH_DB && 'the DASH_DB D1 binding', !(env.AGENT_TOKEN && env.AGENT_TOKEN.length >= 32) && 'AGENT_TOKEN (32+ characters)']
@@ -181,6 +183,9 @@ export async function getBackupJobInfo(
       request: null,
       cooldownSeconds: 0,
       overdue: false,
+      snapshots: [],
+      restore: null,
+      restoreBlocked: 'Backups from arm-free are not set up.',
     };
   }
 
@@ -191,7 +196,17 @@ export async function getBackupJobInfo(
     db.prepare('SELECT * FROM backup_last_run WHERE id = 1'),
   ]);
   const hb = hbResult.results[0] as
-    | { seen_at: number; last_success: number | null; archive_bytes: number | null; busy: number; cron_active: number | null; schedule_installed: number | null }
+    | {
+        seen_at: number;
+        last_success: number | null;
+        archive_bytes: number | null;
+        busy: number;
+        cron_active: number | null;
+        schedule_installed: number | null;
+        mc_online: number | null;
+        mc_player_count: number | null;
+        snapshots: string | null;
+      }
     | undefined;
   const req = reqResult.results[0] as RequestRow | undefined;
   const run = runResult.results[0] as
@@ -229,6 +244,39 @@ export async function getBackupJobInfo(
     overdue = reference > 0 && now - reference > OVERDUE_MS;
   }
 
+  // Daily snapshots as last reported, newest first
+  let snapshots: BackupJobInfo['snapshots'] = [];
+  try {
+    const list = hb?.snapshots ? (JSON.parse(hb.snapshots) as Array<{ name: string; sizeBytes: number; mtime: number }>) : [];
+    snapshots = list
+      .slice()
+      .sort((a, b) => b.mtime - a.mtime || b.name.localeCompare(a.name))
+      .map((s) => ({ name: s.name, sizeBytes: s.sizeBytes, mtime: new Date(s.mtime).toISOString() }));
+  } catch {
+    snapshots = [];
+  }
+
+  const restore = await latestRestore(db, now);
+
+  // Why a restore cannot start right now, in the order someone would fix it (null: it can)
+  const agentPlayers = responding && hb?.mc_online === 1 ? hb.mc_player_count ?? 0 : 0;
+  const playersOnline = Math.max(agentPlayers, ctx.playersOnline);
+  const backupActive = request?.state === 'pending' || request?.state === 'running' || (responding && hb?.busy === 1);
+  const restoreBlocked =
+    restore && (restore.state === 'pending' || restore.state === 'running')
+      ? 'A restore is already in progress.'
+      : !responding
+      ? 'arm-free is not responding, so nothing would carry out the restore.'
+      : ctx.vmState !== 'RUNNING'
+      ? 'Start the server first: the restore copies the world onto Minecraft-Premium, so its VM must be on. Minecraft itself is stopped for the restore.'
+      : playersOnline > 0
+      ? `${playersOnline} ${playersOnline === 1 ? 'player is' : 'players are'} online. Restore when nobody is.`
+      : backupActive
+      ? 'A backup is running. Try again when it has finished.'
+      : snapshots.length === 0
+      ? 'No daily snapshots reported yet.'
+      : null;
+
   return {
     configured: true,
     agent: hb
@@ -254,5 +302,8 @@ export async function getBackupJobInfo(
     request,
     cooldownSeconds,
     overdue,
+    snapshots,
+    restore,
+    restoreBlocked,
   };
 }

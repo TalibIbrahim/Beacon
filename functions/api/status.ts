@@ -114,7 +114,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       : Promise.resolve(null);
     const [recentLog, backupJob, leaderboard, snap] = await Promise.all([
       getRecentActivityLog(env.DASH_KV, 20),
-      getBackupJobInfo(env, { vmState, onlineSince }).catch((err): BackupJobInfo | undefined => {
+      getBackupJobInfo(env, { vmState, onlineSince, playersOnline: mcOnline ? players.online : 0 }).catch((err): BackupJobInfo | undefined => {
         console.error('Backup job status failed:', err instanceof Error ? err.message : err);
         return undefined;
       }),
