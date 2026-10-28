@@ -1,11 +1,12 @@
-// Backup jobs run by the agent on arm-free, stored in D1 (binding AGENT_DB).
+// Backup jobs run by the agent on arm-free, stored in D1 (binding DASH_DB, schema in migrations/).
 //
 // The agent pulls: every minute it POSTs a heartbeat to /api/agent/poll and gets back
 // { backup: true } at most once per "Backup now". D1 rather than KV because the heartbeat is a
 // write every minute (KV's free plan allows 1,000 writes a day) and because handing a request
 // to the agent must happen exactly once (KV writes take up to a minute to reach other locations).
 //
-// Every table holds a single row (id = 1) except agent_rate. The tables are created on first use.
+// Every table here holds a single row (id = 1) except agent_rate. The heartbeat row itself is
+// written by snapshot.ts.
 
 import { BackupJobInfo, BackupRequestState, BackupTrigger, Env, VmState } from './types';
 
@@ -16,57 +17,8 @@ const PENDING_TIMEOUT_MS = 10 * 60 * 1000;
 const RUNNING_TIMEOUT_MS = 60 * 60 * 1000;
 const OVERDUE_MS = 90 * 60 * 1000;
 
-const SCHEMA = [
-  `CREATE TABLE IF NOT EXISTS agent_heartbeat (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    seen_at INTEGER NOT NULL,
-    last_success INTEGER,
-    archive_bytes INTEGER,
-    busy INTEGER NOT NULL DEFAULT 0,
-    cron_active INTEGER,
-    schedule_installed INTEGER
-  )`,
-  `CREATE TABLE IF NOT EXISTS backup_request (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    state TEXT NOT NULL,
-    requested_at INTEGER NOT NULL,
-    started_at INTEGER,
-    finished_at INTEGER,
-    size_bytes INTEGER,
-    error TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS backup_last_run (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
-    trigger TEXT NOT NULL,
-    ok INTEGER NOT NULL,
-    finished_at INTEGER NOT NULL,
-    size_bytes INTEGER,
-    error TEXT
-  )`,
-  `CREATE TABLE IF NOT EXISTS agent_rate (
-    key TEXT PRIMARY KEY,
-    window_start INTEGER NOT NULL,
-    count INTEGER NOT NULL
-  )`,
-];
-
-let schemaReady: Promise<void> | null = null;
-
-export function ensureSchema(db: D1Database): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = db
-      .batch(SCHEMA.map((sql) => db.prepare(sql)))
-      .then(() => undefined)
-      .catch((err) => {
-        schemaReady = null;
-        throw err;
-      });
-  }
-  return schemaReady;
-}
-
-export function isAgentConfigured(env: Env): env is Env & { AGENT_DB: D1Database; AGENT_TOKEN: string } {
-  return Boolean(env.AGENT_DB && env.AGENT_TOKEN && env.AGENT_TOKEN.length >= 32);
+export function isAgentConfigured(env: Env): env is Env & { DASH_DB: D1Database; AGENT_TOKEN: string } {
+  return Boolean(env.DASH_DB && env.AGENT_TOKEN && env.AGENT_TOKEN.length >= 32);
 }
 
 // --- Rate limits (fixed windows, global per key) ---------------------------------------------
@@ -97,44 +49,6 @@ export async function readRate(db: D1Database, key: string, windowMs: number): P
 }
 
 // --- Agent side --------------------------------------------------------------------------------
-
-export interface Heartbeat {
-  lastSuccess: number | null; // epoch ms
-  archiveBytes: number | null;
-  busy: boolean;
-  cronActive: boolean | null;
-  scheduleInstalled: boolean | null;
-}
-
-const boolOrNull = (v: boolean | null) => (v === null ? null : v ? 1 : 0);
-
-// Store the heartbeat and, in the same transaction, hand over a pending request if there is one.
-// Returns true when the agent should run a backup now.
-export async function recordHeartbeatAndClaim(db: D1Database, hb: Heartbeat): Promise<boolean> {
-  const now = Date.now();
-  const [, claim] = await db.batch([
-    db
-      .prepare(
-        `INSERT INTO agent_heartbeat (id, seen_at, last_success, archive_bytes, busy, cron_active, schedule_installed)
-         VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6)
-         ON CONFLICT(id) DO UPDATE SET
-           seen_at = excluded.seen_at,
-           last_success = NULLIF(MAX(COALESCE(excluded.last_success, 0), COALESCE(agent_heartbeat.last_success, 0)), 0),
-           archive_bytes = COALESCE(excluded.archive_bytes, agent_heartbeat.archive_bytes),
-           busy = excluded.busy,
-           cron_active = excluded.cron_active,
-           schedule_installed = excluded.schedule_installed`
-      )
-      .bind(now, hb.lastSuccess, hb.archiveBytes, hb.busy ? 1 : 0, boolOrNull(hb.cronActive), boolOrNull(hb.scheduleInstalled)),
-    db
-      .prepare(
-        `UPDATE backup_request SET state = 'running', started_at = ?1
-         WHERE id = 1 AND state = 'pending' AND requested_at > ?2`
-      )
-      .bind(now, now - PENDING_TIMEOUT_MS),
-  ]);
-  return (claim.meta.changes ?? 0) === 1;
-}
 
 export interface RunReport {
   trigger: BackupTrigger;
@@ -254,7 +168,7 @@ export async function getBackupJobInfo(
   ctx: { vmState: VmState; onlineSince: string | null }
 ): Promise<BackupJobInfo> {
   if (!isAgentConfigured(env)) {
-    const missing = [!env.AGENT_DB && 'the AGENT_DB D1 binding', !(env.AGENT_TOKEN && env.AGENT_TOKEN.length >= 32) && 'AGENT_TOKEN (32+ characters)']
+    const missing = [!env.DASH_DB && 'the DASH_DB D1 binding', !(env.AGENT_TOKEN && env.AGENT_TOKEN.length >= 32) && 'AGENT_TOKEN (32+ characters)']
       .filter(Boolean)
       .join(' and ');
     return {
@@ -270,8 +184,7 @@ export async function getBackupJobInfo(
     };
   }
 
-  const db = env.AGENT_DB;
-  await ensureSchema(db);
+  const db = env.DASH_DB;
   const [hbResult, reqResult, runResult] = await db.batch([
     db.prepare('SELECT * FROM agent_heartbeat WHERE id = 1'),
     db.prepare('SELECT * FROM backup_request WHERE id = 1'),

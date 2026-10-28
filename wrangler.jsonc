@@ -14,13 +14,14 @@
       "id": "ea5e590c0bd749b0acd7fe941cc9b706"
     }
   ],
-  // Backups from arm-free ("Backup now", heartbeat). The binding must be AGENT_DB (not the "DB"
-  // wrangler suggests). Tables are created on first use.
+  // D1: the arm-free agent's state, events (Discord), playtime, snapshots and restore jobs.
+  // Schema lives in migrations/: npx wrangler d1 migrations apply beacon-agent --remote
   "d1_databases": [
     {
-      "binding": "AGENT_DB",
+      "binding": "DASH_DB",
       "database_name": "beacon-agent",
-      "database_id": "eabc4e41-2f5a-4c05-830a-4b3e8bb53713"
+      "database_id": "eabc4e41-2f5a-4c05-830a-4b3e8bb53713",
+      "migrations_dir": "migrations"
     }
   ]
   // World saves in Cloudflare R2: create the bucket first (npx wrangler r2 bucket create beacon-backups),

@@ -3,7 +3,7 @@
 // every 5 minutes at most.
 
 import { getMaskedActor } from '../../_lib/auth';
-import { createBackupRequest, ensureSchema, isAgentConfigured } from '../../_lib/backupjob';
+import { createBackupRequest, isAgentConfigured } from '../../_lib/backupjob';
 import { addActivityLog } from '../../_lib/log';
 import { Env } from '../../_lib/types';
 
@@ -14,12 +14,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   if (!isAgentConfigured(env)) {
-    return json({ error: 'Backups from arm-free are not set up yet (AGENT_DB and AGENT_TOKEN).' }, 503);
+    return json({ error: 'Backups from arm-free are not set up yet (DASH_DB and AGENT_TOKEN).' }, 503);
   }
 
   try {
-    await ensureSchema(env.AGENT_DB);
-    const result = await createBackupRequest(env.AGENT_DB);
+    const result = await createBackupRequest(env.DASH_DB);
 
     if (!result.ok && result.reason === 'busy') {
       return json(

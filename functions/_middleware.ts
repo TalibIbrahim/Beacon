@@ -26,9 +26,10 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // 2. Request body size check (reject bodies over 1 KB)
+    // 2. Request body size check (reject bodies over 1 KB). The agent routes have their own,
+    //    larger cap (8 KB, see _lib/agent.ts), enforced while reading the body.
     const contentLength = request.headers.get('content-length');
-    if (contentLength && parseInt(contentLength, 10) > 1024) {
+    if (contentLength && parseInt(contentLength, 10) > 1024 && !AGENT_API_PATHS.has(path)) {
       return new Response(JSON.stringify({ error: 'Payload Too Large: Body must be under 1 KB' }), {
         status: 413,
         headers: {

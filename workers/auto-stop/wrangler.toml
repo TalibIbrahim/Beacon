@@ -10,6 +10,13 @@ crons = ["*/10 * * * *"]
 binding = "DASH_KV"
 id = "ea5e590c0bd749b0acd7fe941cc9b706"
 
+# D1 binding: same database as the dashboard (wrangler.jsonc). Used to record the stop event
+# (Discord, de-duplicated with the dashboard and the agent) and to stay away while a restore runs.
+[[d1_databases]]
+binding = "DASH_DB"
+database_name = "beacon-agent"
+database_id = "eabc4e41-2f5a-4c05-830a-4b3e8bb53713"
+
 [vars]
 OCI_REGION = "me-dubai-1"
 AUTO_STOP_MINUTES = "30"

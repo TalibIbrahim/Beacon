@@ -54,8 +54,11 @@ The screenshots use made-up data (a documentation IP address and invented player
   shapes are CSS variables in `src/index.css`, mapped into the Tailwind theme.
 - **Backend:** Cloudflare Pages Functions (`functions/`), compiled into a Worker by `npm run build`
   and deployed with `wrangler.jsonc`. Web Crypto only: no Node APIs, no crypto packages.
-- **Storage:** one KV namespace bound as `DASH_KV`; optionally a D1 database bound as `AGENT_DB` (for
-  the arm-free agent) and an R2 bucket bound as `BACKUP_BUCKET`.
+- **Storage:** one KV namespace bound as `DASH_KV` (sessions, rate limits, cooldowns, activity log,
+  caches); a D1 database bound as `DASH_DB` (the agent's per-minute snapshot, the "Backup now" request,
+  events, playtime, snapshots, restore jobs; schema in `migrations/`); optionally an R2 bucket bound as
+  `BACKUP_BUCKET`. The split exists because KV's free plan allows about 1,000 writes a day and D1's
+  100,000: anything written every minute goes to D1.
 
 ## Quick start
 
@@ -89,14 +92,14 @@ Set these in `.dev.vars` for local development, and as variables/secrets on the 
 | `SESSION_SECRET` | yes | Random string of 32+ characters for signing session cookies |
 | `TRIAL_END` | no | When the Oracle trial ends, ISO 8601 (`2026-12-01T00:00:00Z`). Leave out to hide the countdown |
 | `BACKUP_URL` | no | Oracle Object Storage pre-authenticated request (or any HTTPS link) to the world save. Set it as a secret and use a **read-only** link: signed-in users are redirected to it |
-| `AGENT_TOKEN` | no | Bearer token for arm-free's agent (`openssl rand -hex 32`, 32+ characters). Secret. Needs `AGENT_DB` too |
+| `AGENT_TOKEN` | no | Bearer token for arm-free's agent (`openssl rand -hex 32`, 32+ characters). Secret. Needs `DASH_DB` too |
 | `VM_BACKUP_TOKEN` | no | Secret path segment for the direct-from-VM download |
 | `TURNSTILE_SITEKEY` / `TURNSTILE_SECRET` | no | Cloudflare Turnstile bot check on the sign-in screen (set both) |
 
 | Binding | Required | What it is |
 |---|---|---|
 | `DASH_KV` | yes | KV namespace (already in `wrangler.jsonc`) |
-| `AGENT_DB` | no | D1 database for the arm-free agent (commented block in `wrangler.jsonc`) |
+| `DASH_DB` | for the agent | D1 database `beacon-agent` (already in `wrangler.jsonc`, `migrations_dir: migrations`). Also bound to `workers/auto-stop` |
 | `BACKUP_BUCKET` | no | R2 bucket holding `world-latest.tar.gz` |
 
 ### Password hash
@@ -357,7 +360,8 @@ them.
 2. **Beacon:** create the database and the token, then deploy:
 
    ```bash
-   npx wrangler d1 create beacon-agent      # put the id in the d1_databases block in wrangler.jsonc (binding AGENT_DB)
+   npx wrangler d1 create beacon-agent      # put the id in the d1_databases blocks (binding DASH_DB) of wrangler.jsonc and workers/auto-stop/wrangler.toml
+   npx wrangler d1 migrations apply beacon-agent --remote   # creates or updates the tables; run again after pulling new migrations
    openssl rand -hex 32                     # the token: for the next command and the env file
    npx wrangler secret put AGENT_TOKEN
    npx wrangler secret put BACKUP_URL       # the read link
@@ -392,7 +396,13 @@ log), and `~/beacon/pack-and-upload.sh --force` to upload the current copy strai
 npm run build
 npx wrangler pages dev dist --kv DASH_KV                                   # http://localhost:8788
 npx wrangler pages dev dist --kv DASH_KV --r2 BACKUP_BUCKET=beacon-backups # with a local R2 bucket
-npx wrangler pages dev dist --kv DASH_KV --d1 AGENT_DB                     # with a local agent database
+```
+
+With a local D1 database (the id is the one in `wrangler.jsonc`; both commands must share `--persist-to`):
+
+```bash
+npx wrangler d1 migrations apply beacon-agent --local --persist-to .wrangler/state
+npx wrangler pages dev dist --kv DASH_KV --d1 DASH_DB=eabc4e41-2f5a-4c05-830a-4b3e8bb53713 --persist-to .wrangler/state
 ```
 
 With `AGENT_TOKEN` in `.dev.vars`, you can play the agent with curl:
@@ -423,7 +433,7 @@ npx wrangler deploy
 
 Add the variables from [Configuration](#configuration) under **Settings → Variables and Secrets**
 (the private key, password hash and session secret as secrets). `keep_vars` in `wrangler.jsonc` keeps
-dashboard variables across deploys. The KV namespace and the `AGENT_DB` database are already bound;
+dashboard variables across deploys. The KV namespace and the `DASH_DB` database are already bound;
 R2 is bound by the commented block in `wrangler.jsonc`.
 
 ### Auto-stop worker

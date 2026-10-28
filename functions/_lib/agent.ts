@@ -3,11 +3,13 @@
 // token instead: AGENT_TOKEN, compared in constant time.
 
 import { getMaskedActor, timingSafeEqual } from './auth';
-import { bumpRate, ensureSchema, isAgentConfigured, readRate } from './backupjob';
+import { bumpRate, isAgentConfigured, readRate } from './backupjob';
 import { Env } from './types';
 
 export const AGENT_API_PATHS = new Set(['/api/agent/poll', '/api/agent/report']);
-export const AGENT_MAX_BODY_BYTES = 1024;
+// The poll carries the player list, server health and the snapshot list; 8 KB is ample for that
+// (200 names of up to 64 characters would not fit, but the payload caps keep real ones far below).
+export const AGENT_MAX_BODY_BYTES = 8 * 1024;
 
 // Successful calls: the agent polls once a minute and reports a few times an hour
 const REQUESTS_PER_MINUTE = 10;
@@ -46,12 +48,9 @@ export async function guardAgentRequest(request: Request, env: Env, path: string
     return json({ error: 'The backup agent is not set up on this Beacon.' }, 503);
   }
 
-  const db = env.AGENT_DB;
-  try {
-    await ensureSchema(db);
-  } catch (err) {
-    console.error('Agent DB unavailable:', err instanceof Error ? err.message : err);
-    return json({ error: 'Agent storage unavailable' }, 503);
+  const db = env.DASH_DB;
+  if (request.headers.get('content-length') && parseInt(request.headers.get('content-length') || '0', 10) > AGENT_MAX_BODY_BYTES) {
+    return json({ error: `Payload Too Large: Body must be under ${AGENT_MAX_BODY_BYTES} bytes` }, 413);
   }
 
   const ipHash = await getMaskedActor(request.headers.get('CF-Connecting-IP') || '127.0.0.1');
@@ -105,31 +104,4 @@ export async function readAgentJson(request: Request): Promise<Record<string, un
   } catch {
     return null;
   }
-}
-
-// --- Field validation: anything malformed becomes null rather than an error ---------------------
-
-const EARLIEST = Date.UTC(2020, 0, 1);
-
-export function parseTime(v: unknown): number | null {
-  if (typeof v !== 'string' || v.length > 40) return null;
-  const t = Date.parse(v);
-  // Allow a little clock skew, nothing from the future beyond that
-  if (isNaN(t) || t < EARLIEST || t > Date.now() + 5 * 60 * 1000) return null;
-  return t;
-}
-
-export function parseBytes(v: unknown): number | null {
-  return typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 && v < 1e13 ? v : null;
-}
-
-export function parseBool(v: unknown): boolean | null {
-  return typeof v === 'boolean' ? v : null;
-}
-
-// Short, single-line, printable: it ends up on the dashboard and in the activity log
-export function parseMessage(v: unknown): string | null {
-  if (typeof v !== 'string') return null;
-  const clean = v.replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, 200);
-  return clean || null;
 }

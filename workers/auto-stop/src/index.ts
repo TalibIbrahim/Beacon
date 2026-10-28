@@ -12,6 +12,8 @@ import {
 
 export interface AutoStopEnv {
   DASH_KV: KVNamespace;
+  // Same D1 database as the dashboard (events, restore jobs); optional so the worker still runs without it
+  DASH_DB?: D1Database;
   OCI_TENANCY_OCID: string;
   OCI_USER_OCID: string;
   OCI_FINGERPRINT: string;

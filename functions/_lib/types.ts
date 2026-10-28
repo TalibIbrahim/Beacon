@@ -15,8 +15,8 @@ export interface Env {
   TRIAL_END?: string;
   TURNSTILE_SECRET?: string;
   TURNSTILE_SITEKEY?: string;
-  // Backup agent on arm-free (see functions/_lib/backupjob.ts)
-  AGENT_DB?: D1Database;
+  // D1: the arm-free agent, events, playtime, snapshots, restores (schema in migrations/)
+  DASH_DB?: D1Database;
   AGENT_TOKEN?: string;
 }
 
@@ -64,7 +64,7 @@ export type BackupTrigger = 'requested' | 'scheduled';
 
 // Backups made by the agent on arm-free (mc-agent.sh), as shown in the Backups panel
 export interface BackupJobInfo {
-  // false until AGENT_DB is bound and AGENT_TOKEN is set
+  // false until DASH_DB is bound and AGENT_TOKEN is set
   configured: boolean;
   message?: string;
   agent: {

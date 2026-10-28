@@ -1,8 +1,9 @@
 // POST /api/agent/report - Result of a backup run on arm-free.
-// Bearer AGENT_TOKEN (checked in _middleware.ts).
-// Body: { ok, finishedAt, sizeBytes?, error?, trigger: "requested" | "scheduled" }
+// Bearer AGENT_TOKEN (checked in _middleware.ts). The body is validated strictly (agentpayload.ts):
+// { trigger: "requested" | "scheduled", ok, finishedAt, sizeBytes?, error? }
 
-import { parseBool, parseBytes, parseMessage, parseTime, readAgentJson } from '../../_lib/agent';
+import { PayloadError, parseReport } from '../../_lib/agentpayload';
+import { readAgentJson } from '../../_lib/agent';
 import { clearBackupProbeCache } from '../../_lib/backup';
 import { recordRunReport } from '../../_lib/backupjob';
 import { addActivityLog } from '../../_lib/log';
@@ -20,18 +21,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const { request, env } = context;
 
   const body = await readAgentJson(request);
-  const ok = body ? parseBool(body.ok) : null;
-  const finishedAt = body ? parseTime(body.finishedAt) : null;
-  if (!body || ok === null || finishedAt === null) {
-    return json({ error: 'Expected { ok: boolean, finishedAt: ISO 8601 time }' }, 400);
-  }
+  if (!body) return json({ error: 'Invalid JSON body (or over 8 KB)' }, 400);
 
-  const trigger = body.trigger === 'scheduled' ? 'scheduled' : 'requested';
-  const sizeBytes = parseBytes(body.sizeBytes);
-  const error = ok ? null : parseMessage(body.error) ?? 'Backup failed (no reason given).';
+  let report;
+  try {
+    report = parseReport(body);
+  } catch (err) {
+    if (err instanceof PayloadError) return json({ error: err.message }, 400);
+    throw err;
+  }
+  if (report.kind !== 'backup') return json({ error: 'Restore reports are not accepted yet' }, 400);
+
+  const { trigger, ok, finishedAt, sizeBytes, error } = report;
 
   try {
-    const closedRequest = await recordRunReport(env.AGENT_DB!, { trigger, ok, finishedAt, sizeBytes, error });
+    const closedRequest = await recordRunReport(env.DASH_DB!, { trigger, ok, finishedAt, sizeBytes, error });
     // A new archive may be in the bucket. /api/status also re-checks it after any report (see
     // resolveBackup's freshAfter); deleting the cached check here covers /api/backup in this location.
     await clearBackupProbeCache(env);
