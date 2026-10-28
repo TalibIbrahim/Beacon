@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/index.css"
+        ],
+        "createdAt": "2026-10-28T08:22:00.619Z",
+        "reason": "user confirmed: asked to keep the per-card material bands (top strips, not side tabs) and to add a Settings switch to turn them off"
+      }
+    ]
+  }
+}

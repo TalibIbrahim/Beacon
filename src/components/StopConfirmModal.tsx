@@ -55,7 +55,7 @@ export const StopConfirmModal: React.FC<ConfirmModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/70" onClick={() => !loading && onClose()} aria-hidden="true" />
+      <div className="fixed inset-0 bg-[color-mix(in_srgb,var(--obsidian)_70%,transparent)]" onClick={() => !loading && onClose()} aria-hidden="true" />
 
       <form
         onSubmit={submit}
@@ -63,9 +63,9 @@ export const StopConfirmModal: React.FC<ConfirmModalProps> = ({
         aria-modal="true"
         aria-labelledby="confirm-title"
         aria-describedby="confirm-body"
-        className="relative w-full max-w-md panel bg-surface p-6 shadow-[0_12px_28px_rgba(0,0,0,0.45)] animate-dialog-in"
+        className="relative w-full max-w-md panel band-stone px-6 pb-6 pt-8 animate-dialog-in"
       >
-        <h2 id="confirm-title" className="text-xl font-semibold">
+        <h2 id="confirm-title" className="font-display font-semibold text-[22px] leading-7">
           {isStop ? 'Stop the server?' : 'Restart the server?'}
         </h2>
 
@@ -77,7 +77,7 @@ export const StopConfirmModal: React.FC<ConfirmModalProps> = ({
           </p>
 
           {hasPlayers && (
-            <div className="p-3 rounded-card bg-pill-negative">
+            <div className="p-3.5 rounded-lg border-2 border-edge bg-pill-negative">
               <p className="text-ink">
                 {plural(playerCount, 'player')} {playerCount === 1 ? 'is' : 'are'} on right now and will be
                 disconnected.
@@ -95,7 +95,7 @@ export const StopConfirmModal: React.FC<ConfirmModalProps> = ({
                 autoCapitalize="characters"
                 spellCheck={false}
                 disabled={loading}
-                className="mt-1.5 w-full h-10 px-3 rounded-card bg-ground border border-control text-ink outline-none focus:border-negative"
+                className="mt-1.5 w-full h-11 px-3 rounded-lg bg-surface border-2 border-control text-ink outline-none focus:border-negative"
               />
             </div>
           )}
@@ -108,7 +108,7 @@ export const StopConfirmModal: React.FC<ConfirmModalProps> = ({
           <button
             type="submit"
             disabled={!confirmed || loading}
-            className="btn bg-negative text-white hover:brightness-110 disabled:bg-raised disabled:text-faint"
+            className="btn bg-negative text-on-negative hover:brightness-110 disabled:bg-raised disabled:text-faint disabled:border-line"
           >
             {loading && <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />}
             {loading ? 'Sending…' : isStop ? 'Stop server' : 'Restart server'}

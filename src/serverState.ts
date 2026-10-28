@@ -44,6 +44,16 @@ export const PHASE_WORD: Record<Phase, string> = {
   unknown: 'Unknown',
 };
 
+// A short, friendly line beside the status word. The status word itself stays plain.
+export const PHASE_LINE: Record<Phase, string> = {
+  off: "Server's napping",
+  booting: 'Waking up the VM…',
+  loading: 'Warming up the world…',
+  online: 'Come on in',
+  stopping: 'Saving and shutting down…',
+  unknown: "Can't read the server right now",
+};
+
 export function isTransitional(phase: Phase): boolean {
   return phase === 'booting' || phase === 'loading' || phase === 'stopping';
 }
@@ -66,13 +76,13 @@ export function getFinding(status: StatusResponse, now = Date.now()): string {
       return parts.join(' · ');
     }
     case 'loading':
-      return 'The VM is up. Minecraft usually needs 1–2 minutes to load the world.';
+      return 'The VM is up. Minecraft needs 1–2 minutes to load the world.';
     case 'booting':
       return 'Oracle Cloud is booting the VM. The world loads right after.';
     case 'stopping':
       return 'Shutting down. Everyone on the server has been disconnected.';
     case 'off':
-      return 'The server is off. Starting it takes about 2 minutes.';
+      return 'The server is off. Start it and it’s ready in about 2 minutes.';
     default:
       return "Couldn't read the VM state from Oracle Cloud. Check the OCI credentials.";
   }

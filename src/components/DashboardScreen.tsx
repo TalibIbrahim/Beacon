@@ -11,6 +11,8 @@ import { PlayersCard } from './PlayersCard';
 import { SkeletonLoader } from './SkeletonLoader';
 import { StatusPanel } from './StatusPanel';
 import { StopConfirmModal } from './StopConfirmModal';
+import { SettingsMenu } from './SettingsMenu';
+import { ThemeToggle } from './ThemeToggle';
 import { ToastContainer } from './Toast';
 import { UsageCard } from './UsageCard';
 
@@ -19,6 +21,7 @@ interface DashboardScreenProps {
 }
 
 const POLL_FAST_MS = 4000; // while the VM is starting or stopping
+const POLL_BACKUP_MS = 5000; // while a "Backup now" is requested or running
 const POLL_SLOW_MS = 10000;
 const COOLDOWN_SECONDS = 30;
 
@@ -143,10 +146,17 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
     [onLogout]
   );
 
-  // Poll: fast while the VM is changing state, slower otherwise, paused while the tab is hidden
+  // Poll: fast while the VM is changing state or a backup is under way, slower otherwise, paused
+  // while the tab is hidden
   const phase: Phase | null = status ? getPhase(status) : null;
-  const fastRef = useRef(false);
-  fastRef.current = phase !== null && isTransitional(phase);
+  const backupState = status?.backupJob?.request?.state;
+  const pollMsRef = useRef(POLL_SLOW_MS);
+  pollMsRef.current =
+    phase !== null && isTransitional(phase)
+      ? POLL_FAST_MS
+      : backupState === 'pending' || backupState === 'running'
+      ? POLL_BACKUP_MS
+      : POLL_SLOW_MS;
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -154,7 +164,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
 
     const loop = async () => {
       if (document.visibilityState === 'visible') await fetchStatus();
-      if (!cancelled) timer = setTimeout(loop, fastRef.current ? POLL_FAST_MS : POLL_SLOW_MS);
+      if (!cancelled) timer = setTimeout(loop, pollMsRef.current);
     };
 
     const onVisibility = () => {
@@ -232,26 +242,28 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
         onClose={closeModal}
       />
 
-      <header className="sticky top-0 z-40 bg-ground border-b border-line pt-[env(safe-area-inset-top)]">
-        <div className="max-w-[1152px] mx-auto px-4 sm:px-6 h-12 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-40 bg-[var(--ground-top)] pt-[env(safe-area-inset-top)]">
+        <div className="max-w-[1152px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5 min-w-0">
             <AppMark />
-            <span className="font-semibold">Beacon</span>
+            <span className="font-display font-semibold text-lg tracking-[0.02em]">Beacon</span>
             {status?.computeUsage && (
               <span className="hidden md:inline text-faint truncate">
                 {status.region} · {status.computeUsage.shape}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 sm:gap-3">
-            <span className="hidden sm:inline">
+          <div className="flex items-center gap-0.5 sm:gap-2">
+            <span className="hidden sm:inline mr-1">
               <Freshness updatedAt={updatedAt} failed={Boolean(error && status)} />
             </span>
+            <ThemeToggle />
+            <SettingsMenu />
             <button
               type="button"
               onClick={() => fetchStatus(true)}
               disabled={refreshing}
-              className="btn-ghost w-8 px-0"
+              className="btn-ghost"
               aria-label="Refresh now"
               title="Refresh now"
             >
@@ -263,13 +275,15 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
             </button>
           </div>
         </div>
+        {/* The ground line: a strip of grass over dirt */}
+        <div className="h-[7px] bg-grass border-b-2 border-edge shadow-[inset_0_-3px_0_var(--dirt)]" aria-hidden="true" />
       </header>
 
-      <main className="max-w-[1152px] w-full mx-auto px-4 sm:px-6 pt-7 pb-16 flex-1">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-6">
+      <main className="max-w-[1152px] w-full mx-auto px-4 sm:px-6 pt-8 pb-16 flex-1">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between mb-7">
           <div className="min-w-0">
-            <h1 className="text-[26px] leading-8 font-semibold tracking-[-0.01em]">Minecraft server</h1>
-            <p className="mt-1 text-muted num">
+            <h1 className="font-display font-semibold text-[30px] leading-9 tracking-[0.01em]">Minecraft server</h1>
+            <p className="mt-1.5 text-muted num">
               {status ? getFinding(status) : error ? 'Status unavailable.' : 'Checking the server…'}
             </p>
           </div>
@@ -281,7 +295,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
         {error && !status && !loading ? (
           <div className="panel p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p>
-              <span className="inline-block w-2 h-2 rounded-full bg-negative mr-2.5 align-middle" aria-hidden="true" />
+              <span className="inline-block w-2 h-2 rounded-[2px] bg-negative mr-2.5 align-middle" aria-hidden="true" />
               Couldn't load the server status. {error}
             </p>
             <button type="button" onClick={() => fetchStatus(true)} className="btn-secondary self-start sm:self-auto">
@@ -302,7 +316,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
                 <BackupCard backupInfo={status.backupInfo} onToast={addToast} />
               </div>
               <div className="order-4 lg:order-none">
-                <BackupsCard job={status.backupJob} onRequested={() => fetchStatus()} onToast={addToast} />
+                <BackupsCard job={status.backupJob} onRequested={fetchStatus} onToast={addToast} />
               </div>
               <div className="order-5 lg:order-none">
                 <UsageCard usage={status.computeUsage} trialDaysLeft={status.trialDaysLeft} region={status.region} />

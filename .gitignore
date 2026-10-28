@@ -28,3 +28,7 @@ Thumbs.db
 
 # Design tooling output
 .taste-skill/
+
+# Impeccable working files (screenshots, detector cache)
+.impeccable/review/
+.impeccable/hook.cache.json

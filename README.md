@@ -8,6 +8,8 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
 
 <img src="docs/dashboard-phone.jpg" alt="Beacon on a phone while the server is starting" width="300">
 
+The screenshots use made-up data (a documentation IP address and invented player names).
+
 ## What it does
 
 - **Status at a glance.** One answer to "can we play right now?": the server state, the join address
@@ -25,6 +27,9 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
   and whether the VM would fit Oracle's Always Free Ampere allowance.
 - **Activity log** of starts, stops, sign-ins and downloads (last 100 kept, IPs stored as a short hash).
 - **Auto-stop** (optional worker): shuts the VM down after 30 minutes with nobody online.
+- **Dark and light themes.** Follows the system setting until you pick one with the sun/moon button.
+  **Settings** (the gear) turns the coloured strips on top of each card on or off. Both choices are
+  remembered per browser.
 
 ## How it fits together
 
@@ -43,8 +48,10 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
  Oracle VM ── scripts/backup-world.sh ──▶ R2 / Object Storage / local folder for serve-backup.sh
 ```
 
-- **Frontend:** React 18, Vite, Tailwind CSS, self-hosted Public Sans. No third-party scripts, fonts
-  or CDNs.
+- **Frontend:** React 18, Vite, Tailwind CSS, self-hosted Public Sans and Pixelify Sans (titles and the
+  status word only; both SIL OFL, licences in `public/fonts/`). The pixel art (status beacon, boot-track
+  blocks, player avatars) is inline SVG. No third-party scripts, fonts, images or CDNs. Colours and
+  shapes are CSS variables in `src/index.css`, mapped into the Tailwind theme.
 - **Backend:** Cloudflare Pages Functions (`functions/`), compiled into a Worker by `npm run build`
   and deployed with `wrangler.jsonc`. Web Crypto only: no Node APIs, no crypto packages.
 - **Storage:** one KV namespace bound as `DASH_KV`; optionally a D1 database bound as `AGENT_DB` (for

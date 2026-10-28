@@ -1,4 +1,16 @@
 import React, { useState } from 'react';
+import {
+  DatabaseBackup,
+  Download,
+  LogIn,
+  LucideIcon,
+  Play,
+  RotateCw,
+  ShieldAlert,
+  Square,
+  TimerOff,
+  Archive,
+} from 'lucide-react';
 import { formatDate, formatRelative } from '../format';
 import { ActivityLogEntry } from '../types';
 
@@ -32,48 +44,73 @@ function describe(entry: ActivityLogEntry): string {
   }
 }
 
+// An icon and a tint per kind of event, so the list scans like a quest log rather than a log file
+function iconFor(entry: ActivityLogEntry): { Icon: LucideIcon; tint: string } {
+  switch (entry.action) {
+    case 'START':
+      return { Icon: Play, tint: 'bg-pill-positive text-positive' };
+    case 'STOP':
+      return entry.actor === 'cron'
+        ? { Icon: TimerOff, tint: 'bg-raised text-muted' }
+        : { Icon: Square, tint: 'bg-pill-warning text-warning' };
+    case 'RESTART':
+      return { Icon: RotateCw, tint: 'bg-pill-warning text-warning' };
+    case 'LOGIN':
+      return { Icon: LogIn, tint: 'bg-pill-info text-info' };
+    case 'FAILED_LOGIN':
+      return { Icon: ShieldAlert, tint: 'bg-pill-negative text-negative' };
+    case 'BACKUP_DOWNLOAD':
+      return { Icon: Download, tint: 'bg-pill-info text-info' };
+    case 'BACKUP_REQUEST':
+      return { Icon: DatabaseBackup, tint: 'bg-raised text-muted' };
+    case 'BACKUP_RUN':
+      return { Icon: Archive, tint: 'bg-pill-positive text-positive' };
+    default:
+      return { Icon: Square, tint: 'bg-raised text-muted' };
+  }
+}
+
 export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? logs : logs.slice(0, VISIBLE_ROWS);
 
   return (
-    <section className="panel" aria-labelledby="activity-heading">
-      <header className="flex items-baseline justify-between gap-3 px-5 pt-4 pb-3">
-        <h2 id="activity-heading" className="text-base font-semibold">
+    <section className="panel band-stone" aria-labelledby="activity-heading">
+      <header className="flex items-center justify-between gap-3 px-5 pt-6 pb-2">
+        <h2 id="activity-heading" className="card-title">
           Recent activity
         </h2>
         {logs.length > VISIBLE_ROWS && (
-          <button
-            type="button"
-            onClick={() => setShowAll((v) => !v)}
-            className="text-muted hover:text-ink transition-colors"
-            aria-expanded={showAll}
-          >
+          <button type="button" onClick={() => setShowAll((v) => !v)} className="btn-ghost -mr-2.5" aria-expanded={showAll}>
             {showAll ? 'Show less' : `Show all ${logs.length}`}
           </button>
         )}
       </header>
 
       {logs.length === 0 ? (
-        <p className="mx-5 mb-5 px-3 py-2.5 rounded-card border border-dashed border-line text-muted">
+        <p className="mx-5 mb-5 px-3.5 py-3 rounded-lg border-2 border-dashed border-line text-muted">
           Nothing has happened yet. Starts, stops, sign-ins, backups and downloads show up here.
         </p>
       ) : (
-        <ul className="px-5 pb-2">
+        <ul className="px-5 pb-3">
           {visible.map((entry) => {
             const failed = entry.result === 'FAILED';
             const isLoginFailure = entry.action === 'FAILED_LOGIN';
-            const named = entry.actor === 'cron' || entry.actor === 'agent';
             const who = entry.actor === 'cron' ? 'Auto-stop' : entry.actor === 'agent' ? 'arm-free' : entry.actor;
+            const named = entry.actor === 'cron' || entry.actor === 'agent';
             // The worker writes "Auto-stopped after 30m idle…"; the row title already says it
             const details = entry.details?.replace(/^Auto-stopped\s+/i, '');
+            const { Icon, tint } = failed && !isLoginFailure ? { Icon: ShieldAlert, tint: 'bg-pill-negative text-negative' } : iconFor(entry);
             return (
-              <li key={entry.id} className="flex items-start justify-between gap-3 py-2.5 border-t border-rule first:border-t-0">
-                <div className="min-w-0">
+              <li key={entry.id} className="flex items-start gap-3 py-3 border-t-2 border-rule first:border-t-0">
+                <span className={`icon-tile ${tint}`}>
+                  <Icon className="w-4 h-4" aria-hidden="true" />
+                </span>
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="truncate">{describe(entry)}</span>
+                    <span className="truncate font-medium">{describe(entry)}</span>
                     {failed && !isLoginFailure && (
-                      <span className="flex-none h-5 px-2 inline-flex items-center rounded-full bg-pill-negative text-negative text-xs">
+                      <span className="flex-none h-5 px-1.5 inline-flex items-center rounded border border-edge bg-pill-negative text-negative text-xs font-semibold">
                         Failed
                       </span>
                     )}
@@ -86,7 +123,7 @@ export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
                 <time
                   dateTime={entry.timestamp}
                   title={formatDate(entry.timestamp)}
-                  className={`shrink-0 num text-sm ${isLoginFailure ? 'text-negative' : 'text-muted'}`}
+                  className={`shrink-0 pt-0.5 num text-sm ${isLoginFailure ? 'text-negative' : 'text-muted'}`}
                 >
                   {formatRelative(entry.timestamp)}
                 </time>
@@ -96,9 +133,7 @@ export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
         </ul>
       )}
 
-      <p className="px-5 py-3 border-t border-line text-xs text-faint">
-        Visitors show as a short hash of their IP address.
-      </p>
+      <p className="px-5 py-3 border-t-2 border-rule text-xs text-faint">Visitors show as a short hash of their IP address.</p>
     </section>
   );
 };

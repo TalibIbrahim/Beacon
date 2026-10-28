@@ -1,0 +1,1385 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-28T08:30:49.434Z",
+  "title": "Design System: Beacon",
+  "extensions": {
+    "colorMeta": {
+      "ground-top": {
+        "role": "neutral",
+        "displayName": "Twilight Plum Top",
+        "canonical": "#3a2b33",
+        "oklch": "oklch(30.9% 0.026 345.4)",
+        "tonalRamp": [
+          "oklch(15% 0.026 345.4)",
+          "oklch(26.4% 0.026 345.4)",
+          "oklch(37.9% 0.026 345.4)",
+          "oklch(49.3% 0.026 345.4)",
+          "oklch(60.7% 0.026 345.4)",
+          "oklch(72.1% 0.026 345.4)",
+          "oklch(83.6% 0.026 345.4)",
+          "oklch(95% 0.026 345.4)"
+        ]
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Twilight Plum",
+        "canonical": "#2a2026",
+        "oklch": "oklch(25.8% 0.019 341.8)",
+        "tonalRamp": [
+          "oklch(15% 0.019 341.8)",
+          "oklch(26.4% 0.019 341.8)",
+          "oklch(37.9% 0.019 341.8)",
+          "oklch(49.3% 0.019 341.8)",
+          "oklch(60.7% 0.019 341.8)",
+          "oklch(72.1% 0.019 341.8)",
+          "oklch(83.6% 0.019 341.8)",
+          "oklch(95% 0.019 341.8)"
+        ]
+      },
+      "ground-bottom": {
+        "role": "neutral",
+        "displayName": "Twilight Plum Deep",
+        "canonical": "#221a1f",
+        "oklch": "oklch(22.9% 0.016 340.5)",
+        "tonalRamp": [
+          "oklch(15% 0.016 340.5)",
+          "oklch(26.4% 0.016 340.5)",
+          "oklch(37.9% 0.016 340.5)",
+          "oklch(49.3% 0.016 340.5)",
+          "oklch(60.7% 0.016 340.5)",
+          "oklch(72.1% 0.016 340.5)",
+          "oklch(83.6% 0.016 340.5)",
+          "oklch(95% 0.016 340.5)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Stone Slab",
+        "canonical": "#342a31",
+        "oklch": "oklch(29.9% 0.019 337)",
+        "tonalRamp": [
+          "oklch(15% 0.019 337)",
+          "oklch(26.4% 0.019 337)",
+          "oklch(37.9% 0.019 337)",
+          "oklch(49.3% 0.019 337)",
+          "oklch(60.7% 0.019 337)",
+          "oklch(72.1% 0.019 337)",
+          "oklch(83.6% 0.019 337)",
+          "oklch(95% 0.019 337)"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised Slab",
+        "canonical": "#40353d",
+        "oklch": "oklch(34.4% 0.02 335.8)",
+        "tonalRamp": [
+          "oklch(15% 0.02 335.8)",
+          "oklch(26.4% 0.02 335.8)",
+          "oklch(37.9% 0.02 335.8)",
+          "oklch(49.3% 0.02 335.8)",
+          "oklch(60.7% 0.02 335.8)",
+          "oklch(72.1% 0.02 335.8)",
+          "oklch(83.6% 0.02 335.8)",
+          "oklch(95% 0.02 335.8)"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Quiet Border",
+        "canonical": "#4d4048",
+        "oklch": "oklch(38.8% 0.022 340.7)",
+        "tonalRamp": [
+          "oklch(15% 0.022 340.7)",
+          "oklch(26.4% 0.022 340.7)",
+          "oklch(37.9% 0.022 340.7)",
+          "oklch(49.3% 0.022 340.7)",
+          "oklch(60.7% 0.022 340.7)",
+          "oklch(72.1% 0.022 340.7)",
+          "oklch(83.6% 0.022 340.7)",
+          "oklch(95% 0.022 340.7)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Row Rule",
+        "canonical": "#43373f",
+        "oklch": "oklch(35.3% 0.021 338.4)",
+        "tonalRamp": [
+          "oklch(15% 0.021 338.4)",
+          "oklch(26.4% 0.021 338.4)",
+          "oklch(37.9% 0.021 338.4)",
+          "oklch(49.3% 0.021 338.4)",
+          "oklch(60.7% 0.021 338.4)",
+          "oklch(72.1% 0.021 338.4)",
+          "oklch(83.6% 0.021 338.4)",
+          "oklch(95% 0.021 338.4)"
+        ]
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "Control Grey",
+        "canonical": "#92848c",
+        "oklch": "oklch(62.8% 0.02 342.3)",
+        "tonalRamp": [
+          "oklch(15% 0.02 342.3)",
+          "oklch(26.4% 0.02 342.3)",
+          "oklch(37.9% 0.02 342.3)",
+          "oklch(49.3% 0.02 342.3)",
+          "oklch(60.7% 0.02 342.3)",
+          "oklch(72.1% 0.02 342.3)",
+          "oklch(83.6% 0.02 342.3)",
+          "oklch(95% 0.02 342.3)"
+        ]
+      },
+      "edge": {
+        "role": "neutral",
+        "displayName": "Warm Rim",
+        "canonical": "#66555f",
+        "oklch": "oklch(47% 0.027 342.1)",
+        "tonalRamp": [
+          "oklch(15% 0.027 342.1)",
+          "oklch(26.4% 0.027 342.1)",
+          "oklch(37.9% 0.027 342.1)",
+          "oklch(49.3% 0.027 342.1)",
+          "oklch(60.7% 0.027 342.1)",
+          "oklch(72.1% 0.027 342.1)",
+          "oklch(83.6% 0.027 342.1)",
+          "oklch(95% 0.027 342.1)"
+        ]
+      },
+      "obsidian": {
+        "role": "neutral",
+        "displayName": "Obsidian",
+        "canonical": "#0e0a0c",
+        "oklch": "oklch(15.1% 0.008 346.5)",
+        "tonalRamp": [
+          "oklch(15% 0.008 346.5)",
+          "oklch(26.4% 0.008 346.5)",
+          "oklch(37.9% 0.008 346.5)",
+          "oklch(49.3% 0.008 346.5)",
+          "oklch(60.7% 0.008 346.5)",
+          "oklch(72.1% 0.008 346.5)",
+          "oklch(83.6% 0.008 346.5)",
+          "oklch(95% 0.008 346.5)"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#f6efe9",
+        "oklch": "oklch(95.6% 0.011 63.4)",
+        "tonalRamp": [
+          "oklch(15% 0.011 63.4)",
+          "oklch(26.4% 0.011 63.4)",
+          "oklch(37.9% 0.011 63.4)",
+          "oklch(49.3% 0.011 63.4)",
+          "oklch(60.7% 0.011 63.4)",
+          "oklch(72.1% 0.011 63.4)",
+          "oklch(83.6% 0.011 63.4)",
+          "oklch(95% 0.011 63.4)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Mauve",
+        "canonical": "#d0c3c6",
+        "oklch": "oklch(82.9% 0.015 1.6)",
+        "tonalRamp": [
+          "oklch(15% 0.015 1.6)",
+          "oklch(26.4% 0.015 1.6)",
+          "oklch(37.9% 0.015 1.6)",
+          "oklch(49.3% 0.015 1.6)",
+          "oklch(60.7% 0.015 1.6)",
+          "oklch(72.1% 0.015 1.6)",
+          "oklch(83.6% 0.015 1.6)",
+          "oklch(95% 0.015 1.6)"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint Mauve",
+        "canonical": "#b3a4aa",
+        "oklch": "oklch(73.3% 0.019 351.4)",
+        "tonalRamp": [
+          "oklch(15% 0.019 351.4)",
+          "oklch(26.4% 0.019 351.4)",
+          "oklch(37.9% 0.019 351.4)",
+          "oklch(49.3% 0.019 351.4)",
+          "oklch(60.7% 0.019 351.4)",
+          "oklch(72.1% 0.019 351.4)",
+          "oklch(83.6% 0.019 351.4)",
+          "oklch(95% 0.019 351.4)"
+        ]
+      },
+      "beacon-cyan": {
+        "role": "primary",
+        "displayName": "Beacon Cyan",
+        "canonical": "#52d6e6",
+        "oklch": "oklch(81% 0.115 206.5)",
+        "tonalRamp": [
+          "oklch(15% 0.115 206.5)",
+          "oklch(26.4% 0.115 206.5)",
+          "oklch(37.9% 0.115 206.5)",
+          "oklch(49.3% 0.115 206.5)",
+          "oklch(60.7% 0.115 206.5)",
+          "oklch(72.1% 0.115 206.5)",
+          "oklch(83.6% 0.115 206.5)",
+          "oklch(95% 0.115 206.5)"
+        ]
+      },
+      "beacon-cyan-hover": {
+        "role": "primary",
+        "displayName": "Beacon Cyan Bright",
+        "canonical": "#74e2ef",
+        "oklch": "oklch(85.3% 0.102 205.6)",
+        "tonalRamp": [
+          "oklch(15% 0.102 205.6)",
+          "oklch(26.4% 0.102 205.6)",
+          "oklch(37.9% 0.102 205.6)",
+          "oklch(49.3% 0.102 205.6)",
+          "oklch(60.7% 0.102 205.6)",
+          "oklch(72.1% 0.102 205.6)",
+          "oklch(83.6% 0.102 205.6)",
+          "oklch(95% 0.102 205.6)"
+        ]
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Accent Ink",
+        "canonical": "#0e0a0c",
+        "oklch": "oklch(15.1% 0.008 346.5)",
+        "tonalRamp": [
+          "oklch(15% 0.008 346.5)",
+          "oklch(26.4% 0.008 346.5)",
+          "oklch(37.9% 0.008 346.5)",
+          "oklch(49.3% 0.008 346.5)",
+          "oklch(60.7% 0.008 346.5)",
+          "oklch(72.1% 0.008 346.5)",
+          "oklch(83.6% 0.008 346.5)",
+          "oklch(95% 0.008 346.5)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "Focus Cyan",
+        "canonical": "#52d6e6",
+        "oklch": "oklch(81% 0.115 206.5)",
+        "tonalRamp": [
+          "oklch(15% 0.115 206.5)",
+          "oklch(26.4% 0.115 206.5)",
+          "oklch(37.9% 0.115 206.5)",
+          "oklch(49.3% 0.115 206.5)",
+          "oklch(60.7% 0.115 206.5)",
+          "oklch(72.1% 0.115 206.5)",
+          "oklch(83.6% 0.115 206.5)",
+          "oklch(95% 0.115 206.5)"
+        ]
+      },
+      "positive": {
+        "role": "secondary",
+        "displayName": "Online Green",
+        "canonical": "#86d672",
+        "oklch": "oklch(80.1% 0.156 139.6)",
+        "tonalRamp": [
+          "oklch(15% 0.156 139.6)",
+          "oklch(26.4% 0.156 139.6)",
+          "oklch(37.9% 0.156 139.6)",
+          "oklch(49.3% 0.156 139.6)",
+          "oklch(60.7% 0.156 139.6)",
+          "oklch(72.1% 0.156 139.6)",
+          "oklch(83.6% 0.156 139.6)",
+          "oklch(95% 0.156 139.6)"
+        ]
+      },
+      "negative": {
+        "role": "secondary",
+        "displayName": "Redstone",
+        "canonical": "#ff8080",
+        "oklch": "oklch(74.4% 0.155 21.5)",
+        "tonalRamp": [
+          "oklch(15% 0.155 21.5)",
+          "oklch(26.4% 0.155 21.5)",
+          "oklch(37.9% 0.155 21.5)",
+          "oklch(49.3% 0.155 21.5)",
+          "oklch(60.7% 0.155 21.5)",
+          "oklch(72.1% 0.155 21.5)",
+          "oklch(83.6% 0.155 21.5)",
+          "oklch(95% 0.155 21.5)"
+        ]
+      },
+      "on-negative": {
+        "role": "secondary",
+        "displayName": "On Redstone",
+        "canonical": "#0e0a0c",
+        "oklch": "oklch(15.1% 0.008 346.5)",
+        "tonalRamp": [
+          "oklch(15% 0.008 346.5)",
+          "oklch(26.4% 0.008 346.5)",
+          "oklch(37.9% 0.008 346.5)",
+          "oklch(49.3% 0.008 346.5)",
+          "oklch(60.7% 0.008 346.5)",
+          "oklch(72.1% 0.008 346.5)",
+          "oklch(83.6% 0.008 346.5)",
+          "oklch(95% 0.008 346.5)"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Torch Amber",
+        "canonical": "#f3ae45",
+        "oklch": "oklch(79.8% 0.142 74.1)",
+        "tonalRamp": [
+          "oklch(15% 0.142 74.1)",
+          "oklch(26.4% 0.142 74.1)",
+          "oklch(37.9% 0.142 74.1)",
+          "oklch(49.3% 0.142 74.1)",
+          "oklch(60.7% 0.142 74.1)",
+          "oklch(72.1% 0.142 74.1)",
+          "oklch(83.6% 0.142 74.1)",
+          "oklch(95% 0.142 74.1)"
+        ]
+      },
+      "info": {
+        "role": "secondary",
+        "displayName": "Info Blue",
+        "canonical": "#82c4ff",
+        "oklch": "oklch(79.9% 0.108 246.6)",
+        "tonalRamp": [
+          "oklch(15% 0.108 246.6)",
+          "oklch(26.4% 0.108 246.6)",
+          "oklch(37.9% 0.108 246.6)",
+          "oklch(49.3% 0.108 246.6)",
+          "oklch(60.7% 0.108 246.6)",
+          "oklch(72.1% 0.108 246.6)",
+          "oklch(83.6% 0.108 246.6)",
+          "oklch(95% 0.108 246.6)"
+        ]
+      },
+      "pill-positive-bg": {
+        "role": "secondary",
+        "displayName": "Pill Positive Bg",
+        "canonical": "#2c3a2c",
+        "oklch": "oklch(33.1% 0.031 144.8)",
+        "tonalRamp": [
+          "oklch(15% 0.031 144.8)",
+          "oklch(26.4% 0.031 144.8)",
+          "oklch(37.9% 0.031 144.8)",
+          "oklch(49.3% 0.031 144.8)",
+          "oklch(60.7% 0.031 144.8)",
+          "oklch(72.1% 0.031 144.8)",
+          "oklch(83.6% 0.031 144.8)",
+          "oklch(95% 0.031 144.8)"
+        ]
+      },
+      "pill-negative-bg": {
+        "role": "secondary",
+        "displayName": "Pill Negative Bg",
+        "canonical": "#4a2a31",
+        "oklch": "oklch(32.8% 0.049 5.9)",
+        "tonalRamp": [
+          "oklch(15% 0.049 5.9)",
+          "oklch(26.4% 0.049 5.9)",
+          "oklch(37.9% 0.049 5.9)",
+          "oklch(49.3% 0.049 5.9)",
+          "oklch(60.7% 0.049 5.9)",
+          "oklch(72.1% 0.049 5.9)",
+          "oklch(83.6% 0.049 5.9)",
+          "oklch(95% 0.049 5.9)"
+        ]
+      },
+      "pill-warning-bg": {
+        "role": "secondary",
+        "displayName": "Pill Warning Bg",
+        "canonical": "#47362a",
+        "oklch": "oklch(34.8% 0.032 56.7)",
+        "tonalRamp": [
+          "oklch(15% 0.032 56.7)",
+          "oklch(26.4% 0.032 56.7)",
+          "oklch(37.9% 0.032 56.7)",
+          "oklch(49.3% 0.032 56.7)",
+          "oklch(60.7% 0.032 56.7)",
+          "oklch(72.1% 0.032 56.7)",
+          "oklch(83.6% 0.032 56.7)",
+          "oklch(95% 0.032 56.7)"
+        ]
+      },
+      "pill-info-bg": {
+        "role": "secondary",
+        "displayName": "Pill Info Bg",
+        "canonical": "#2b3646",
+        "oklch": "oklch(33% 0.032 257.7)",
+        "tonalRamp": [
+          "oklch(15% 0.032 257.7)",
+          "oklch(26.4% 0.032 257.7)",
+          "oklch(37.9% 0.032 257.7)",
+          "oklch(49.3% 0.032 257.7)",
+          "oklch(60.7% 0.032 257.7)",
+          "oklch(72.1% 0.032 257.7)",
+          "oklch(83.6% 0.032 257.7)",
+          "oklch(95% 0.032 257.7)"
+        ]
+      },
+      "grass": {
+        "role": "tertiary",
+        "displayName": "Grass",
+        "canonical": "#5fae4e",
+        "oklch": "oklch(67.8% 0.153 140.2)",
+        "tonalRamp": [
+          "oklch(15% 0.153 140.2)",
+          "oklch(26.4% 0.153 140.2)",
+          "oklch(37.9% 0.153 140.2)",
+          "oklch(49.3% 0.153 140.2)",
+          "oklch(60.7% 0.153 140.2)",
+          "oklch(72.1% 0.153 140.2)",
+          "oklch(83.6% 0.153 140.2)",
+          "oklch(95% 0.153 140.2)"
+        ]
+      },
+      "grass-dark": {
+        "role": "tertiary",
+        "displayName": "Grass Dark",
+        "canonical": "#3f7d33",
+        "oklch": "oklch(53.1% 0.125 140.5)",
+        "tonalRamp": [
+          "oklch(15% 0.125 140.5)",
+          "oklch(26.4% 0.125 140.5)",
+          "oklch(37.9% 0.125 140.5)",
+          "oklch(49.3% 0.125 140.5)",
+          "oklch(60.7% 0.125 140.5)",
+          "oklch(72.1% 0.125 140.5)",
+          "oklch(83.6% 0.125 140.5)",
+          "oklch(95% 0.125 140.5)"
+        ]
+      },
+      "dirt": {
+        "role": "tertiary",
+        "displayName": "Dirt",
+        "canonical": "#8b5e3c",
+        "oklch": "oklch(52.2% 0.076 57.2)",
+        "tonalRamp": [
+          "oklch(15% 0.076 57.2)",
+          "oklch(26.4% 0.076 57.2)",
+          "oklch(37.9% 0.076 57.2)",
+          "oklch(49.3% 0.076 57.2)",
+          "oklch(60.7% 0.076 57.2)",
+          "oklch(72.1% 0.076 57.2)",
+          "oklch(83.6% 0.076 57.2)",
+          "oklch(95% 0.076 57.2)"
+        ]
+      },
+      "dirt-dark": {
+        "role": "tertiary",
+        "displayName": "Dirt Dark",
+        "canonical": "#6a4329",
+        "oklch": "oklch(42.2% 0.067 53.6)",
+        "tonalRamp": [
+          "oklch(15% 0.067 53.6)",
+          "oklch(26.4% 0.067 53.6)",
+          "oklch(37.9% 0.067 53.6)",
+          "oklch(49.3% 0.067 53.6)",
+          "oklch(60.7% 0.067 53.6)",
+          "oklch(72.1% 0.067 53.6)",
+          "oklch(83.6% 0.067 53.6)",
+          "oklch(95% 0.067 53.6)"
+        ]
+      },
+      "stone": {
+        "role": "tertiary",
+        "displayName": "Stone",
+        "canonical": "#7f7b8e",
+        "oklch": "oklch(59.3% 0.029 295.2)",
+        "tonalRamp": [
+          "oklch(15% 0.029 295.2)",
+          "oklch(26.4% 0.029 295.2)",
+          "oklch(37.9% 0.029 295.2)",
+          "oklch(49.3% 0.029 295.2)",
+          "oklch(60.7% 0.029 295.2)",
+          "oklch(72.1% 0.029 295.2)",
+          "oklch(83.6% 0.029 295.2)",
+          "oklch(95% 0.029 295.2)"
+        ]
+      },
+      "stone-dark": {
+        "role": "tertiary",
+        "displayName": "Stone Dark",
+        "canonical": "#5e5a6d",
+        "oklch": "oklch(47.8% 0.031 294.9)",
+        "tonalRamp": [
+          "oklch(15% 0.031 294.9)",
+          "oklch(26.4% 0.031 294.9)",
+          "oklch(37.9% 0.031 294.9)",
+          "oklch(49.3% 0.031 294.9)",
+          "oklch(60.7% 0.031 294.9)",
+          "oklch(72.1% 0.031 294.9)",
+          "oklch(83.6% 0.031 294.9)",
+          "oklch(95% 0.031 294.9)"
+        ]
+      },
+      "sky": {
+        "role": "tertiary",
+        "displayName": "Sky",
+        "canonical": "#5aa9e6",
+        "oklch": "oklch(71% 0.119 243.9)",
+        "tonalRamp": [
+          "oklch(15% 0.119 243.9)",
+          "oklch(26.4% 0.119 243.9)",
+          "oklch(37.9% 0.119 243.9)",
+          "oklch(49.3% 0.119 243.9)",
+          "oklch(60.7% 0.119 243.9)",
+          "oklch(72.1% 0.119 243.9)",
+          "oklch(83.6% 0.119 243.9)",
+          "oklch(95% 0.119 243.9)"
+        ]
+      },
+      "torch": {
+        "role": "tertiary",
+        "displayName": "Torch",
+        "canonical": "#f3ae45",
+        "oklch": "oklch(79.8% 0.142 74.1)",
+        "tonalRamp": [
+          "oklch(15% 0.142 74.1)",
+          "oklch(26.4% 0.142 74.1)",
+          "oklch(37.9% 0.142 74.1)",
+          "oklch(49.3% 0.142 74.1)",
+          "oklch(60.7% 0.142 74.1)",
+          "oklch(72.1% 0.142 74.1)",
+          "oklch(83.6% 0.142 74.1)",
+          "oklch(95% 0.142 74.1)"
+        ]
+      },
+      "beam": {
+        "role": "primary",
+        "displayName": "Beam",
+        "canonical": "#52d6e6",
+        "oklch": "oklch(81% 0.115 206.5)",
+        "tonalRamp": [
+          "oklch(15% 0.115 206.5)",
+          "oklch(26.4% 0.115 206.5)",
+          "oklch(37.9% 0.115 206.5)",
+          "oklch(49.3% 0.115 206.5)",
+          "oklch(60.7% 0.115 206.5)",
+          "oklch(72.1% 0.115 206.5)",
+          "oklch(83.6% 0.115 206.5)",
+          "oklch(95% 0.115 206.5)"
+        ]
+      },
+      "day-ground-top": {
+        "role": "neutral",
+        "displayName": "Twilight Plum Top (daytime)",
+        "canonical": "#cde6f6",
+        "oklch": "oklch(91.2% 0.034 235.9)",
+        "tonalRamp": [
+          "oklch(15% 0.034 235.9)",
+          "oklch(26.4% 0.034 235.9)",
+          "oklch(37.9% 0.034 235.9)",
+          "oklch(49.3% 0.034 235.9)",
+          "oklch(60.7% 0.034 235.9)",
+          "oklch(72.1% 0.034 235.9)",
+          "oklch(83.6% 0.034 235.9)",
+          "oklch(95% 0.034 235.9)"
+        ],
+        "theme": "light"
+      },
+      "day-ground": {
+        "role": "neutral",
+        "displayName": "Twilight Plum (daytime)",
+        "canonical": "#e3eef3",
+        "oklch": "oklch(94.2% 0.014 226.6)",
+        "tonalRamp": [
+          "oklch(15% 0.014 226.6)",
+          "oklch(26.4% 0.014 226.6)",
+          "oklch(37.9% 0.014 226.6)",
+          "oklch(49.3% 0.014 226.6)",
+          "oklch(60.7% 0.014 226.6)",
+          "oklch(72.1% 0.014 226.6)",
+          "oklch(83.6% 0.014 226.6)",
+          "oklch(95% 0.014 226.6)"
+        ],
+        "theme": "light"
+      },
+      "day-ground-bottom": {
+        "role": "neutral",
+        "displayName": "Twilight Plum Deep (daytime)",
+        "canonical": "#eef3ea",
+        "oklch": "oklch(95.8% 0.013 130.8)",
+        "tonalRamp": [
+          "oklch(15% 0.013 130.8)",
+          "oklch(26.4% 0.013 130.8)",
+          "oklch(37.9% 0.013 130.8)",
+          "oklch(49.3% 0.013 130.8)",
+          "oklch(60.7% 0.013 130.8)",
+          "oklch(72.1% 0.013 130.8)",
+          "oklch(83.6% 0.013 130.8)",
+          "oklch(95% 0.013 130.8)"
+        ],
+        "theme": "light"
+      },
+      "day-surface": {
+        "role": "neutral",
+        "displayName": "Stone Slab (daytime)",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100% 0 89.9)",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26.4% 0 89.9)",
+          "oklch(37.9% 0 89.9)",
+          "oklch(49.3% 0 89.9)",
+          "oklch(60.7% 0 89.9)",
+          "oklch(72.1% 0 89.9)",
+          "oklch(83.6% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ],
+        "theme": "light"
+      },
+      "day-raised": {
+        "role": "neutral",
+        "displayName": "Raised Slab (daytime)",
+        "canonical": "#eef1f6",
+        "oklch": "oklch(95.7% 0.007 260.7)",
+        "tonalRamp": [
+          "oklch(15% 0.007 260.7)",
+          "oklch(26.4% 0.007 260.7)",
+          "oklch(37.9% 0.007 260.7)",
+          "oklch(49.3% 0.007 260.7)",
+          "oklch(60.7% 0.007 260.7)",
+          "oklch(72.1% 0.007 260.7)",
+          "oklch(83.6% 0.007 260.7)",
+          "oklch(95% 0.007 260.7)"
+        ],
+        "theme": "light"
+      },
+      "day-border": {
+        "role": "neutral",
+        "displayName": "Quiet Border (daytime)",
+        "canonical": "#d7dbe5",
+        "oklch": "oklch(89.1% 0.014 268.5)",
+        "tonalRamp": [
+          "oklch(15% 0.014 268.5)",
+          "oklch(26.4% 0.014 268.5)",
+          "oklch(37.9% 0.014 268.5)",
+          "oklch(49.3% 0.014 268.5)",
+          "oklch(60.7% 0.014 268.5)",
+          "oklch(72.1% 0.014 268.5)",
+          "oklch(83.6% 0.014 268.5)",
+          "oklch(95% 0.014 268.5)"
+        ],
+        "theme": "light"
+      },
+      "day-rule": {
+        "role": "neutral",
+        "displayName": "Row Rule (daytime)",
+        "canonical": "#e6e9f0",
+        "oklch": "oklch(93.4% 0.01 267.4)",
+        "tonalRamp": [
+          "oklch(15% 0.01 267.4)",
+          "oklch(26.4% 0.01 267.4)",
+          "oklch(37.9% 0.01 267.4)",
+          "oklch(49.3% 0.01 267.4)",
+          "oklch(60.7% 0.01 267.4)",
+          "oklch(72.1% 0.01 267.4)",
+          "oklch(83.6% 0.01 267.4)",
+          "oklch(95% 0.01 267.4)"
+        ],
+        "theme": "light"
+      },
+      "day-control": {
+        "role": "neutral",
+        "displayName": "Control Grey (daytime)",
+        "canonical": "#6f6c83",
+        "oklch": "oklch(54.2% 0.036 291.1)",
+        "tonalRamp": [
+          "oklch(15% 0.036 291.1)",
+          "oklch(26.4% 0.036 291.1)",
+          "oklch(37.9% 0.036 291.1)",
+          "oklch(49.3% 0.036 291.1)",
+          "oklch(60.7% 0.036 291.1)",
+          "oklch(72.1% 0.036 291.1)",
+          "oklch(83.6% 0.036 291.1)",
+          "oklch(95% 0.036 291.1)"
+        ],
+        "theme": "light"
+      },
+      "day-edge": {
+        "role": "neutral",
+        "displayName": "Warm Rim (daytime)",
+        "canonical": "#1d1b29",
+        "oklch": "oklch(23.1% 0.027 290.7)",
+        "tonalRamp": [
+          "oklch(15% 0.027 290.7)",
+          "oklch(26.4% 0.027 290.7)",
+          "oklch(37.9% 0.027 290.7)",
+          "oklch(49.3% 0.027 290.7)",
+          "oklch(60.7% 0.027 290.7)",
+          "oklch(72.1% 0.027 290.7)",
+          "oklch(83.6% 0.027 290.7)",
+          "oklch(95% 0.027 290.7)"
+        ],
+        "theme": "light"
+      },
+      "day-text": {
+        "role": "neutral",
+        "displayName": "Warm Paper (daytime)",
+        "canonical": "#1b1a24",
+        "oklch": "oklch(22.4% 0.019 289.3)",
+        "tonalRamp": [
+          "oklch(15% 0.019 289.3)",
+          "oklch(26.4% 0.019 289.3)",
+          "oklch(37.9% 0.019 289.3)",
+          "oklch(49.3% 0.019 289.3)",
+          "oklch(60.7% 0.019 289.3)",
+          "oklch(72.1% 0.019 289.3)",
+          "oklch(83.6% 0.019 289.3)",
+          "oklch(95% 0.019 289.3)"
+        ],
+        "theme": "light"
+      },
+      "day-muted": {
+        "role": "neutral",
+        "displayName": "Muted Mauve (daytime)",
+        "canonical": "#474558",
+        "oklch": "oklch(40% 0.032 289.7)",
+        "tonalRamp": [
+          "oklch(15% 0.032 289.7)",
+          "oklch(26.4% 0.032 289.7)",
+          "oklch(37.9% 0.032 289.7)",
+          "oklch(49.3% 0.032 289.7)",
+          "oklch(60.7% 0.032 289.7)",
+          "oklch(72.1% 0.032 289.7)",
+          "oklch(83.6% 0.032 289.7)",
+          "oklch(95% 0.032 289.7)"
+        ],
+        "theme": "light"
+      },
+      "day-faint": {
+        "role": "neutral",
+        "displayName": "Faint Mauve (daytime)",
+        "canonical": "#5d5b70",
+        "oklch": "oklch(48.1% 0.034 289.4)",
+        "tonalRamp": [
+          "oklch(15% 0.034 289.4)",
+          "oklch(26.4% 0.034 289.4)",
+          "oklch(37.9% 0.034 289.4)",
+          "oklch(49.3% 0.034 289.4)",
+          "oklch(60.7% 0.034 289.4)",
+          "oklch(72.1% 0.034 289.4)",
+          "oklch(83.6% 0.034 289.4)",
+          "oklch(95% 0.034 289.4)"
+        ],
+        "theme": "light"
+      },
+      "day-beacon-cyan": {
+        "role": "primary",
+        "displayName": "Beacon Cyan (daytime)",
+        "canonical": "#3fc6d8",
+        "oklch": "oklch(76.3% 0.115 208)",
+        "tonalRamp": [
+          "oklch(15% 0.115 208)",
+          "oklch(26.4% 0.115 208)",
+          "oklch(37.9% 0.115 208)",
+          "oklch(49.3% 0.115 208)",
+          "oklch(60.7% 0.115 208)",
+          "oklch(72.1% 0.115 208)",
+          "oklch(83.6% 0.115 208)",
+          "oklch(95% 0.115 208)"
+        ],
+        "theme": "light"
+      },
+      "day-beacon-cyan-hover": {
+        "role": "primary",
+        "displayName": "Beacon Cyan Bright (daytime)",
+        "canonical": "#2fb4c6",
+        "oklch": "oklch(70.9% 0.112 208.6)",
+        "tonalRamp": [
+          "oklch(15% 0.112 208.6)",
+          "oklch(26.4% 0.112 208.6)",
+          "oklch(37.9% 0.112 208.6)",
+          "oklch(49.3% 0.112 208.6)",
+          "oklch(60.7% 0.112 208.6)",
+          "oklch(72.1% 0.112 208.6)",
+          "oklch(83.6% 0.112 208.6)",
+          "oklch(95% 0.112 208.6)"
+        ],
+        "theme": "light"
+      },
+      "day-accent-ink": {
+        "role": "primary",
+        "displayName": "Accent Ink (daytime)",
+        "canonical": "#0f0d16",
+        "oklch": "oklch(16.6% 0.019 294.5)",
+        "tonalRamp": [
+          "oklch(15% 0.019 294.5)",
+          "oklch(26.4% 0.019 294.5)",
+          "oklch(37.9% 0.019 294.5)",
+          "oklch(49.3% 0.019 294.5)",
+          "oklch(60.7% 0.019 294.5)",
+          "oklch(72.1% 0.019 294.5)",
+          "oklch(83.6% 0.019 294.5)",
+          "oklch(95% 0.019 294.5)"
+        ],
+        "theme": "light"
+      },
+      "day-focus": {
+        "role": "primary",
+        "displayName": "Focus Cyan (daytime)",
+        "canonical": "#0a7584",
+        "oklch": "oklch(51.6% 0.087 210.6)",
+        "tonalRamp": [
+          "oklch(15% 0.087 210.6)",
+          "oklch(26.4% 0.087 210.6)",
+          "oklch(37.9% 0.087 210.6)",
+          "oklch(49.3% 0.087 210.6)",
+          "oklch(60.7% 0.087 210.6)",
+          "oklch(72.1% 0.087 210.6)",
+          "oklch(83.6% 0.087 210.6)",
+          "oklch(95% 0.087 210.6)"
+        ],
+        "theme": "light"
+      },
+      "day-positive": {
+        "role": "secondary",
+        "displayName": "Online Green (daytime)",
+        "canonical": "#2d7424",
+        "oklch": "oklch(49.6% 0.135 141.5)",
+        "tonalRamp": [
+          "oklch(15% 0.135 141.5)",
+          "oklch(26.4% 0.135 141.5)",
+          "oklch(37.9% 0.135 141.5)",
+          "oklch(49.3% 0.135 141.5)",
+          "oklch(60.7% 0.135 141.5)",
+          "oklch(72.1% 0.135 141.5)",
+          "oklch(83.6% 0.135 141.5)",
+          "oklch(95% 0.135 141.5)"
+        ],
+        "theme": "light"
+      },
+      "day-negative": {
+        "role": "secondary",
+        "displayName": "Redstone (daytime)",
+        "canonical": "#c0292b",
+        "oklch": "oklch(52.9% 0.187 25.9)",
+        "tonalRamp": [
+          "oklch(15% 0.187 25.9)",
+          "oklch(26.4% 0.187 25.9)",
+          "oklch(37.9% 0.187 25.9)",
+          "oklch(49.3% 0.187 25.9)",
+          "oklch(60.7% 0.187 25.9)",
+          "oklch(72.1% 0.187 25.9)",
+          "oklch(83.6% 0.187 25.9)",
+          "oklch(95% 0.187 25.9)"
+        ],
+        "theme": "light"
+      },
+      "day-on-negative": {
+        "role": "secondary",
+        "displayName": "On Redstone (daytime)",
+        "canonical": "#ffffff",
+        "oklch": "oklch(100% 0 89.9)",
+        "tonalRamp": [
+          "oklch(15% 0 89.9)",
+          "oklch(26.4% 0 89.9)",
+          "oklch(37.9% 0 89.9)",
+          "oklch(49.3% 0 89.9)",
+          "oklch(60.7% 0 89.9)",
+          "oklch(72.1% 0 89.9)",
+          "oklch(83.6% 0 89.9)",
+          "oklch(95% 0 89.9)"
+        ],
+        "theme": "light"
+      },
+      "day-warning": {
+        "role": "secondary",
+        "displayName": "Torch Amber (daytime)",
+        "canonical": "#9a5200",
+        "oklch": "oklch(51.5% 0.123 58.2)",
+        "tonalRamp": [
+          "oklch(15% 0.123 58.2)",
+          "oklch(26.4% 0.123 58.2)",
+          "oklch(37.9% 0.123 58.2)",
+          "oklch(49.3% 0.123 58.2)",
+          "oklch(60.7% 0.123 58.2)",
+          "oklch(72.1% 0.123 58.2)",
+          "oklch(83.6% 0.123 58.2)",
+          "oklch(95% 0.123 58.2)"
+        ],
+        "theme": "light"
+      },
+      "day-info": {
+        "role": "secondary",
+        "displayName": "Info Blue (daytime)",
+        "canonical": "#1c66ad",
+        "oklch": "oklch(50.4% 0.133 251.7)",
+        "tonalRamp": [
+          "oklch(15% 0.133 251.7)",
+          "oklch(26.4% 0.133 251.7)",
+          "oklch(37.9% 0.133 251.7)",
+          "oklch(49.3% 0.133 251.7)",
+          "oklch(60.7% 0.133 251.7)",
+          "oklch(72.1% 0.133 251.7)",
+          "oklch(83.6% 0.133 251.7)",
+          "oklch(95% 0.133 251.7)"
+        ],
+        "theme": "light"
+      },
+      "day-pill-positive-bg": {
+        "role": "secondary",
+        "displayName": "Pill Positive Bg (daytime)",
+        "canonical": "#e3f3dc",
+        "oklch": "oklch(94.6% 0.035 136)",
+        "tonalRamp": [
+          "oklch(15% 0.035 136)",
+          "oklch(26.4% 0.035 136)",
+          "oklch(37.9% 0.035 136)",
+          "oklch(49.3% 0.035 136)",
+          "oklch(60.7% 0.035 136)",
+          "oklch(72.1% 0.035 136)",
+          "oklch(83.6% 0.035 136)",
+          "oklch(95% 0.035 136)"
+        ],
+        "theme": "light"
+      },
+      "day-pill-negative-bg": {
+        "role": "secondary",
+        "displayName": "Pill Negative Bg (daytime)",
+        "canonical": "#fbe3e3",
+        "oklch": "oklch(93.5% 0.026 17.6)",
+        "tonalRamp": [
+          "oklch(15% 0.026 17.6)",
+          "oklch(26.4% 0.026 17.6)",
+          "oklch(37.9% 0.026 17.6)",
+          "oklch(49.3% 0.026 17.6)",
+          "oklch(60.7% 0.026 17.6)",
+          "oklch(72.1% 0.026 17.6)",
+          "oklch(83.6% 0.026 17.6)",
+          "oklch(95% 0.026 17.6)"
+        ],
+        "theme": "light"
+      },
+      "day-pill-warning-bg": {
+        "role": "secondary",
+        "displayName": "Pill Warning Bg (daytime)",
+        "canonical": "#fbecd7",
+        "oklch": "oklch(94.9% 0.032 76.5)",
+        "tonalRamp": [
+          "oklch(15% 0.032 76.5)",
+          "oklch(26.4% 0.032 76.5)",
+          "oklch(37.9% 0.032 76.5)",
+          "oklch(49.3% 0.032 76.5)",
+          "oklch(60.7% 0.032 76.5)",
+          "oklch(72.1% 0.032 76.5)",
+          "oklch(83.6% 0.032 76.5)",
+          "oklch(95% 0.032 76.5)"
+        ],
+        "theme": "light"
+      },
+      "day-pill-info-bg": {
+        "role": "secondary",
+        "displayName": "Pill Info Bg (daytime)",
+        "canonical": "#deebf8",
+        "oklch": "oklch(93.4% 0.022 248.1)",
+        "tonalRamp": [
+          "oklch(15% 0.022 248.1)",
+          "oklch(26.4% 0.022 248.1)",
+          "oklch(37.9% 0.022 248.1)",
+          "oklch(49.3% 0.022 248.1)",
+          "oklch(60.7% 0.022 248.1)",
+          "oklch(72.1% 0.022 248.1)",
+          "oklch(83.6% 0.022 248.1)",
+          "oklch(95% 0.022 248.1)"
+        ],
+        "theme": "light"
+      },
+      "day-stone": {
+        "role": "tertiary",
+        "displayName": "Stone (daytime)",
+        "canonical": "#8d8a9c",
+        "oklch": "oklch(64.2% 0.027 293.3)",
+        "tonalRamp": [
+          "oklch(15% 0.027 293.3)",
+          "oklch(26.4% 0.027 293.3)",
+          "oklch(37.9% 0.027 293.3)",
+          "oklch(49.3% 0.027 293.3)",
+          "oklch(60.7% 0.027 293.3)",
+          "oklch(72.1% 0.027 293.3)",
+          "oklch(83.6% 0.027 293.3)",
+          "oklch(95% 0.027 293.3)"
+        ],
+        "theme": "light"
+      },
+      "day-stone-dark": {
+        "role": "tertiary",
+        "displayName": "Stone Dark (daytime)",
+        "canonical": "#6d6a7d",
+        "oklch": "oklch(53.4% 0.03 292.6)",
+        "tonalRamp": [
+          "oklch(15% 0.03 292.6)",
+          "oklch(26.4% 0.03 292.6)",
+          "oklch(37.9% 0.03 292.6)",
+          "oklch(49.3% 0.03 292.6)",
+          "oklch(60.7% 0.03 292.6)",
+          "oklch(72.1% 0.03 292.6)",
+          "oklch(83.6% 0.03 292.6)",
+          "oklch(95% 0.03 292.6)"
+        ],
+        "theme": "light"
+      },
+      "day-torch": {
+        "role": "tertiary",
+        "displayName": "Torch (daytime)",
+        "canonical": "#f5a623",
+        "oklch": "oklch(78.4% 0.159 73)",
+        "tonalRamp": [
+          "oklch(15% 0.159 73)",
+          "oklch(26.4% 0.159 73)",
+          "oklch(37.9% 0.159 73)",
+          "oklch(49.3% 0.159 73)",
+          "oklch(60.7% 0.159 73)",
+          "oklch(72.1% 0.159 73)",
+          "oklch(83.6% 0.159 73)",
+          "oklch(95% 0.159 73)"
+        ],
+        "theme": "light"
+      },
+      "day-beam": {
+        "role": "primary",
+        "displayName": "Beam (daytime)",
+        "canonical": "#2fb4c6",
+        "oklch": "oklch(70.9% 0.112 208.6)",
+        "tonalRamp": [
+          "oklch(15% 0.112 208.6)",
+          "oklch(26.4% 0.112 208.6)",
+          "oklch(37.9% 0.112 208.6)",
+          "oklch(49.3% 0.112 208.6)",
+          "oklch(60.7% 0.112 208.6)",
+          "oklch(72.1% 0.112 208.6)",
+          "oklch(83.6% 0.112 208.6)",
+          "oklch(95% 0.112 208.6)"
+        ],
+        "theme": "light"
+      }
+    },
+    "typographyMeta": {
+      "status-word": {
+        "displayName": "Status word",
+        "purpose": "Off, Starting, Online, Shutting down, Unknown on the status card. The loudest text on the dashboard."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page title (30px); sign-in title at 28px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Dialog titles."
+      },
+      "title": {
+        "displayName": "Card title",
+        "purpose": "Every card title; 15px in the Settings popover."
+      },
+      "wordmark": {
+        "displayName": "Wordmark",
+        "purpose": "\"Beacon\" beside the pixel app mark; 20px on sign-in."
+      },
+      "address": {
+        "displayName": "Join address",
+        "purpose": "The join address, tabular, never broken mid-number; 18px on phones."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All running text, rows, values, toasts. Big counts step up to 20px semibold."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button labels."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, row details, footnotes, in Faint."
+      }
+    },
+    "themes": {
+      "default": "dark (twilight)",
+      "light": "daytime: applies under prefers-color-scheme: light unless data-theme=\"dark\", or when data-theme=\"light\" on <html>; the day-* colour tokens are its values for the same CSS variables",
+      "persistence": "localStorage beacon-theme; follows the system until the visitor picks a theme"
+    },
+    "settings": [
+      {
+        "name": "bands",
+        "attribute": "data-bands=\"off\" on <html>",
+        "storage": "localStorage beacon-bands",
+        "effect": "hides every card band; cards must read fully without them"
+      }
+    ],
+    "bands": {
+      "height": "6px",
+      "seam": "inset 0 -2px 0 var(--band-dark)",
+      "assignments": {
+        "status": "stone (off, stopping, unknown) / torch (booting, loading) / grass (online)",
+        "players": "sky",
+        "world-save": "dirt",
+        "backups": "stone",
+        "oracle-cloud": "stone",
+        "activity": "stone",
+        "sign-in": "grass",
+        "dialog": "stone"
+      }
+    },
+    "shadows": [
+      {
+        "name": "slab",
+        "value": "4px 4px 0 var(--obsidian)",
+        "purpose": "Every card, popover, toast and dialog."
+      },
+      {
+        "name": "slab-lifted",
+        "value": "5px 5px 0 var(--obsidian)",
+        "purpose": "Dashboard cards under a hovering pointer, with translate(-1px, -1px)."
+      },
+      {
+        "name": "key",
+        "value": "0 3px 0 var(--obsidian)",
+        "purpose": "Buttons at rest."
+      },
+      {
+        "name": "key-pressed",
+        "value": "0 1px 0 var(--obsidian)",
+        "purpose": "Buttons while pressed, with translateY(2px)."
+      },
+      {
+        "name": "band-seam",
+        "value": "inset 0 -2px 0 var(--band-dark)",
+        "purpose": "The darker underside of a material band."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-lift",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Card lift (160ms), Online dot pulse (1.8s), pixel burst (1000ms)."
+      },
+      {
+        "name": "press",
+        "value": "90ms ease-out",
+        "purpose": "Button press transform and shadow."
+      },
+      {
+        "name": "colour",
+        "value": "150ms ease-out",
+        "purpose": "Background and text colour changes."
+      },
+      {
+        "name": "toast-in",
+        "value": "160ms ease-out, translateY(-8px) and opacity",
+        "purpose": "Toasts and the Settings popover."
+      },
+      {
+        "name": "dialog-in",
+        "value": "140ms ease-out, scale(0.97) and opacity",
+        "purpose": "Confirm dialog."
+      },
+      {
+        "name": "sleepy",
+        "value": "3.2s ease-in-out infinite, opacity 0.55 to 0.85",
+        "purpose": "Current boot block and beacon core while off or stopping."
+      },
+      {
+        "name": "bob",
+        "value": "1.1s cubic-bezier(0.45, 0, 0.55, 1) infinite, translateY(-3px)",
+        "purpose": "Current boot block while booting or loading."
+      },
+      {
+        "name": "beam-pulse",
+        "value": "2.4s ease-in-out infinite, opacity 0.55 to 1",
+        "purpose": "The beacon beam and sparks when online."
+      },
+      {
+        "name": "beam-flicker",
+        "value": "1.4s steps(4, end) infinite",
+        "purpose": "The partial beam while booting."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "all animation and transition durations 0.01ms, one iteration; pixel burst not rendered",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px",
+        "purpose": "24px gutters, side-by-side title row, 40px boot blocks, centred dialogs."
+      },
+      {
+        "name": "md",
+        "value": "768px",
+        "purpose": "Region and shape shown in the header."
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "purpose": "Two columns: flexible main plus 360px rail."
+      }
+    ],
+    "focus": {
+      "value": "outline: 3px solid var(--focus); outline-offset: 2px; border-radius: 6px",
+      "purpose": "Global :focus-visible ring."
+    },
+    "fonts": [
+      {
+        "family": "Public Sans",
+        "weights": [
+          400,
+          500,
+          600,
+          700
+        ],
+        "source": "/fonts, self-hosted",
+        "license": "SIL OFL 1.1"
+      },
+      {
+        "family": "Pixelify Sans",
+        "weights": [
+          500,
+          600
+        ],
+        "source": "/fonts, self-hosted",
+        "license": "SIL OFL 1.1"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one cyan action per state: Start server while off, Copy while online.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><polygon points=\"6 3 20 12 6 21 6 3\"/></svg>Start server</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--edge);font:600 14px/20px 'Public Sans',system-ui,sans-serif;box-shadow:0 3px 0 var(--obsidian);cursor:pointer;transition:transform 90ms ease-out,box-shadow 90ms ease-out,background-color 150ms ease-out;background:var(--accent);color:var(--accent-ink);} .ds-btn-primary:hover{background:var(--accent-hover);} .ds-btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--obsidian);} .ds-btn-primary:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Restart, Retry, Cancel, Download, Backup now, and Copy while not online.",
+      "html": "<button class=\"ds-btn-secondary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8\"/><path d=\"M21 3v5h-5\"/></svg>Restart</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--edge);font:600 14px/20px 'Public Sans',system-ui,sans-serif;box-shadow:0 3px 0 var(--obsidian);cursor:pointer;transition:transform 90ms ease-out,box-shadow 90ms ease-out,background-color 150ms ease-out;background:var(--raised);color:var(--text);} .ds-btn-secondary:hover{background:var(--surface);} .ds-btn-secondary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--obsidian);} .ds-btn-secondary:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Stop server: a raised key with a redstone label; the solid red button lives only inside the confirm dialog.",
+      "html": "<button class=\"ds-btn-danger\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"18\" height=\"18\" x=\"3\" y=\"3\" rx=\"2\"/></svg>Stop server</button>",
+      "css": ".ds-btn-danger{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--edge);font:600 14px/20px 'Public Sans',system-ui,sans-serif;box-shadow:0 3px 0 var(--obsidian);cursor:pointer;transition:transform 90ms ease-out,box-shadow 90ms ease-out,background-color 150ms ease-out;background:var(--raised);color:var(--negative);} .ds-btn-danger:hover{background:var(--pill-negative-bg);} .ds-btn-danger:active{transform:translateY(2px);box-shadow:0 1px 0 var(--obsidian);} .ds-btn-danger:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Header tools: theme toggle, settings, refresh, sign out. 44px square minimum.",
+      "html": "<span style=\"display:inline-flex;gap:8px\"><button class=\"ds-btn-ghost\" aria-label=\"Switch to light theme\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41\"/></svg></button><button class=\"ds-btn-ghost\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/></svg><span>Sign out</span></button></span>",
+      "css": ".ds-btn-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:44px;min-width:44px;padding:0 10px;border:0;border-radius:8px;background:transparent;color:var(--muted);font:400 14px/20px 'Public Sans',system-ui,sans-serif;cursor:pointer;transition:color 150ms,background-color 150ms;} .ds-btn-ghost:hover{color:var(--text);background:var(--raised);} .ds-btn-ghost:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}"
+    },
+    {
+      "name": "Password Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Raised field with a control outline that turns focus-cyan; negative when invalid.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Password</span><input class=\"ds-input\" type=\"password\" value=\"hunter22\"></label>",
+      "css": ".ds-field{display:block;width:320px;} .ds-field-label{display:block;margin-bottom:8px;font:500 14px/20px 'Public Sans',system-ui,sans-serif;color:var(--text);} .ds-input{width:100%;height:44px;padding:0 12px;border-radius:8px;background:var(--raised);border:2px solid var(--control);color:var(--text);caret-color:var(--accent);font:400 14px/20px 'Public Sans',system-ui,sans-serif;outline:none;} .ds-input:focus{border-color:var(--focus);} .ds-input[aria-invalid=true]{border-color:var(--negative);}"
+    },
+    {
+      "name": "State Pill",
+      "kind": "chip",
+      "refersTo": "pill",
+      "description": "A state in words with a square mark, on a pill-tint ground.",
+      "html": "<span style=\"display:inline-flex;gap:8px\"><span class=\"ds-pill ds-pill-positive\"><span class=\"ds-pill-mark\"></span>Cron running</span><span class=\"ds-pill ds-pill-warning\"><span class=\"ds-pill-mark\"></span>Waiting for upload</span><span class=\"ds-pill ds-pill-muted\">Oracle Object Storage</span></span>",
+      "css": ".ds-pill{height:28px;padding:0 10px;display:inline-flex;align-items:center;gap:6px;border-radius:6px;border:2px solid var(--edge);font:600 12px/16px 'Public Sans',system-ui,sans-serif;white-space:nowrap;} .ds-pill-mark{width:8px;height:8px;border-radius:2px;background:currentColor;} .ds-pill-positive{background:var(--pill-positive-bg);color:var(--positive);} .ds-pill-warning{background:var(--pill-warning-bg);color:var(--warning);} .ds-pill-muted{background:var(--raised);color:var(--muted);}"
+    },
+    {
+      "name": "Banded Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The slab every card is built from: ink outline, hard shadow, material band, pixel title. New cards (Discord alerts, whitelist) start here.",
+      "html": "<section class=\"ds-card ds-band-sky\"><header class=\"ds-card-head\"><h2 class=\"ds-card-title\">Players</h2><span class=\"ds-count\"><b>3</b> / 20</span></header><ul class=\"ds-rows\"><li>Talib</li><li>Zain_07</li><li>creeperkiller</li></ul></section>",
+      "css": ".ds-card{position:relative;width:360px;background:var(--surface);border:2px solid var(--edge);border-radius:10px;box-shadow:4px 4px 0 var(--obsidian);color:var(--text);font:400 14px/20px 'Public Sans',system-ui,sans-serif;transition:transform 160ms cubic-bezier(0.16,1,0.3,1),box-shadow 160ms cubic-bezier(0.16,1,0.3,1);} .ds-card:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--obsidian);} .ds-card::before{content:'';position:absolute;inset:0 0 auto 0;height:6px;border-radius:8px 8px 0 0;background:var(--band);box-shadow:inset 0 -2px 0 var(--band-dark);} .ds-band-sky{--band:var(--sky);--band-dark:color-mix(in srgb,var(--sky) 70%,black);} .ds-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:24px 20px 12px;} .ds-card-title{margin:0;font:500 17px/24px 'Pixelify Sans','Public Sans',system-ui,sans-serif;letter-spacing:0.01em;} .ds-count{color:var(--muted);font-variant-numeric:tabular-nums;} .ds-count b{color:var(--text);font-size:20px;font-weight:600;} .ds-rows{list-style:none;margin:0;padding:0 20px 16px;} .ds-rows li{min-height:44px;display:flex;align-items:center;font-weight:500;border-top:2px solid var(--rule);} .ds-rows li:first-child{border-top:0;}"
+    },
+    {
+      "name": "Status Readout",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Signature: pixel beacon, squared state dot, Pixelify status word, friendly line, tabular join address with Copy, on a phase-coloured band.",
+      "html": "<section class=\"ds-status\"><div class=\"ds-status-left\"><svg class=\"ds-px\" viewBox=\"0 0 16 25\" width=\"46\" height=\"72\" aria-hidden=\"true\"><rect x=\"6\" y=\"0\" width=\"4\" height=\"9\" fill=\"var(--beam)\"/><rect x=\"0\" y=\"9\" width=\"16\" height=\"16\" fill=\"var(--obsidian)\"/><rect x=\"1\" y=\"10\" width=\"14\" height=\"14\" fill=\"var(--raised)\"/><rect x=\"1\" y=\"20\" width=\"14\" height=\"4\" fill=\"var(--obsidian)\" opacity=\".7\"/><rect x=\"4\" y=\"12\" width=\"8\" height=\"7\" fill=\"var(--obsidian)\"/><rect x=\"5\" y=\"13\" width=\"6\" height=\"5\" fill=\"var(--beam)\"/></svg><div><div class=\"ds-status-row\"><span class=\"ds-dot\"></span><span class=\"ds-word\">Online</span></div><p class=\"ds-line\">Come on in</p></div></div><div class=\"ds-status-right\"><div class=\"ds-label\">Join address</div><div class=\"ds-status-row\"><span class=\"ds-addr\">203.0.113.42:25565</span><button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"14\" height=\"14\" x=\"8\" y=\"8\" rx=\"2\" ry=\"2\"/><path d=\"M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2\"/></svg>Copy</button></div></div></section>",
+      "css": ".ds-status{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;width:680px;padding:28px 24px 20px;background:var(--surface);border:2px solid var(--edge);border-radius:10px;box-shadow:4px 4px 0 var(--obsidian);color:var(--text);font:400 14px/20px 'Public Sans',system-ui,sans-serif;} .ds-status::before{content:'';position:absolute;inset:0 0 auto 0;height:6px;border-radius:8px 8px 0 0;background:var(--grass);box-shadow:inset 0 -2px 0 var(--grass-dark);} .ds-status-left{display:flex;align-items:center;gap:16px;} .ds-px{image-rendering:pixelated;shape-rendering:crispEdges;} .ds-status-row{display:flex;align-items:center;gap:12px;} .ds-dot{width:12px;height:12px;border-radius:3px;background:var(--positive);} .ds-word{font:600 34px/40px 'Pixelify Sans','Public Sans',system-ui,sans-serif;letter-spacing:0.01em;} .ds-line{margin:2px 0 0;color:var(--muted);} .ds-status-right{text-align:right;} .ds-label{font-size:12px;line-height:16px;color:var(--faint);margin-bottom:6px;} .ds-addr{font-weight:600;font-size:20px;line-height:28px;letter-spacing:0.01em;font-variant-numeric:tabular-nums;white-space:nowrap;} .ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 16px;border-radius:8px;border:2px solid var(--edge);font:600 14px/20px 'Public Sans',system-ui,sans-serif;box-shadow:0 3px 0 var(--obsidian);cursor:pointer;transition:transform 90ms ease-out,box-shadow 90ms ease-out,background-color 150ms ease-out;background:var(--accent);color:var(--accent-ink);} .ds-btn-primary:hover{background:var(--accent-hover);} .ds-btn-primary:active{transform:translateY(2px);box-shadow:0 1px 0 var(--obsidian);} .ds-btn-primary:focus-visible{outline:3px solid var(--focus);outline-offset:2px;}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Game's Own Side Menu",
+    "overview": "Beacon is a server dashboard that feels like a menu inside the game it controls: warm, tactile, built from blocks, instead of a terminal. It refuses both the near-black ops console it replaced and the cartoon kids' launcher. The material is chunky and physical: stone-slab cards with an ink outline and a small hard shadow, buttons that sink when pressed, a thin strip of grass, sky, dirt or stone on top of every card, and crisp pixel-art drawn on whole-pixel grids. The tone is friendly and a little playful but grown-up; it is never a kids' play site.\n\nDensity is calm and readable: one column on phones, a wide main column plus a 360px rail on desktop, 24px between cards. Everything a person reads or counts is set in a plain, sturdy sans (Public Sans) with tabular numerals; the pixel face (Pixelify Sans) is reserved for names, the things you would see on a game menu's tabs. One accent, beacon cyan, carries the primary action, focus, selection and the beacon's own light. Twilight (dark, warm plum) is the default; daytime (sky-blue ground, white cards, the same ink outlines) follows the system until the visitor picks a theme, and both meet WCAG AA.\n\nConfirmed rejections: no mascot faces, no jokes in sign-in, power confirmations or errors, no Mojang logos, textures, fonts or screenshots, and no near-black terminal look.",
+    "keyCharacteristics": [
+      "Stone-slab cards: 2px ink outline, 10px corners, 4px hard offset shadow, a 6px material band on top.",
+      "One accent (beacon cyan) and one primary button per state.",
+      "Pixelify Sans for names only; Public Sans with tabular numerals for everything read or counted.",
+      "Pixel art as inline SVG on small integer grids, rendered crisp (`image-rendering: pixelated`).",
+      "Warm twilight dark by default, daytime light on request; both AA, 44px touch targets.",
+      "One motion grammar: short ease-out, transform and opacity only, off under reduced motion."
+    ],
+    "rules": [
+      {
+        "name": "The One Beacon Rule",
+        "body": "Beacon cyan marks the primary action, focus, selection and the beacon's light, and nothing else. A screen shows at most one cyan button at a time: Start server while off, Copy while online.",
+        "section": "colors"
+      },
+      {
+        "name": "The Materials Stay Thin Rule",
+        "body": "Grass, sky, dirt, stone and torch appear only as card bands, the header ground line, the boot-track blocks, avatars and meter segments. They never fill a card, a button or a page area.",
+        "section": "colors"
+      },
+      {
+        "name": "The Not By Colour Alone Rule",
+        "body": "Every state carries a word plus a mark or shape: the status word beside its dot, pills with a square mark and text, unfilled boot blocks drawn as dashed outlines rather than dimmed fills.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pixel Names Rule",
+        "body": "Pixelify Sans appears only on the wordmark, page and dialog titles, card titles and the status word. Never on body copy, buttons, labels, numbers or the join address.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Count Rule",
+        "body": "Every number that updates or is compared (address, players, sizes, times, costs, countdowns) uses tabular numerals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hard Light Rule",
+        "body": "Shadows are solid Obsidian offsets with zero blur. Nothing glows, nothing floats on a soft shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Press Sink Rule",
+        "body": "Buttons sit on a 3px key shadow and sink into it when pressed; a disabled button is already sunk.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** build every new card (Discord alerts, whitelist, anything else) as a Slab panel with a 2px Edge outline, 10px corners, a material band and a Pixelify card title in the 24px/20px header row.",
+      "**Do** pick a band by what the card is about: grass for live or online, sky for people, dirt for the world and its files, stone for operations, logs and costs, torch only for starting.",
+      "**Do** keep exactly one Beacon Cyan button visible per state; everything else is secondary, danger or ghost.",
+      "**Do** set every number in Public Sans with tabular numerals, including the join address.",
+      "**Do** make every tappable thing at least 44px, show the 3px focus ring, and keep text AA and controls 3:1 in both twilight and daytime.",
+      "**Do** pair every state colour with a word and a mark or shape.",
+      "**Do** draw pixel art as inline SVG on an integer grid with Obsidian outlines, sized in whole multiples, coloured only from theme tokens.",
+      "**Do** keep a card fully readable with bands switched off."
+    ],
+    "donts": [
+      "**Don't** use Pixelify Sans for body copy, buttons, labels, numbers or the join address.",
+      "**Don't** add a second accent colour, or use Beacon Cyan for decoration, headings or status.",
+      "**Don't** fill cards, buttons or page areas with material colours; materials stay in bands, blocks, avatars and meters.",
+      "**Don't** use blurred, glowing or ambient shadows; depth is a hard Obsidian offset.",
+      "**Don't** draw mascot faces or characters; avatars are symmetric patterns.",
+      "**Don't** put jokes or playful lines in sign-in, power confirmations or errors; the friendly lines live beside the status word, which itself stays plain.",
+      "**Don't** use Mojang logos, textures, fonts or screenshots, or images from another origin.",
+      "**Don't** return to the near-black terminal look.",
+      "**Don't** add motion outside the status card's loops and the shared enter, lift and press transitions, or any motion that survives reduced-motion."
+    ]
+  }
+}

@@ -6,7 +6,7 @@ import { BackupJobInfo } from '../types';
 
 interface BackupsCardProps {
   job?: BackupJobInfo;
-  onRequested: () => void;
+  onRequested: () => unknown;
   onToast: (type: 'success' | 'error' | 'info', message: string) => void;
 }
 
@@ -34,6 +34,14 @@ const TONE_PILL: Record<Tone, string> = {
   negative: 'bg-pill-negative text-negative',
   warning: 'bg-pill-warning text-warning',
   muted: 'bg-raised text-muted',
+};
+
+// The pill says it in words and with a mark, so the state never rests on colour alone
+const TONE_MARK: Record<Tone, string> = {
+  positive: 'bg-positive',
+  negative: 'bg-negative',
+  warning: 'bg-warning',
+  muted: 'bg-faint',
 };
 
 const Dash = () => <span className="text-faint">—</span>;
@@ -69,16 +77,18 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
     return () => clearInterval(id);
   }, [cooldown]);
 
-  // Toast when a "Backup now" this tab has watched finishes
+  // When a "Backup now" this tab has watched finishes: toast, and fetch once more so the World save
+  // card has the new archive straight away
   const prev = useRef<{ requestedAt?: string; state?: string }>({});
   useEffect(() => {
     const was = prev.current;
     if (request && was.requestedAt === request.requestedAt && (was.state === 'pending' || was.state === 'running')) {
       if (request.state === 'done') onToast('success', 'Backup finished. The download has the fresh copy.');
       if (request.state === 'failed') onToast('error', `Backup failed: ${request.error ?? 'no reason given'}`);
+      if (request.state === 'done' || request.state === 'failed') onRequested();
     }
     prev.current = { requestedAt: request?.requestedAt, state: request?.state };
-  }, [request?.requestedAt, request?.state, request?.error, onToast]);
+  }, [request?.requestedAt, request?.state, request?.error, onToast, onRequested]);
 
   const active = request?.state === 'pending' || request?.state === 'running';
   const disabled = !job.configured || submitting || active || cooldown > 0;
@@ -113,7 +123,7 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
     <span className="text-warning">Never checked in</span>
   ) : (
     <span className="inline-flex items-center gap-2">
-      <span className={`w-2 h-2 rounded-full ${agent.responding ? 'bg-positive' : 'bg-negative'}`} aria-hidden="true" />
+      <span className={`w-2 h-2 rounded-[2px] ${agent.responding ? 'bg-positive' : 'bg-negative'}`} aria-hidden="true" />
       <span>
         {agent.responding ? 'Running' : 'Not responding'}{' '}
         <span className="text-faint num">· seen {formatRelative(agent.lastSeen)}</span>
@@ -187,12 +197,13 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
   const spinning = submitting || request?.state === 'running';
 
   return (
-    <section className="panel" aria-labelledby="backups-heading">
-      <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-3">
-        <h2 id="backups-heading" className="text-base font-semibold">
+    <section className="panel band-stone" aria-labelledby="backups-heading">
+      <header className="flex items-center justify-between gap-3 px-5 pt-6 pb-3">
+        <h2 id="backups-heading" className="card-title">
           Backups
         </h2>
-        <span className={`h-6 px-2.5 inline-flex items-center rounded-full text-xs whitespace-nowrap ${TONE_PILL[pillTone]}`}>
+        <span className={`pill ${TONE_PILL[pillTone]}`}>
+          <span className={`w-2 h-2 rounded-[2px] ${TONE_MARK[pillTone]} ${pillTone === 'positive' ? 'anim-dot text-positive' : ''}`} aria-hidden="true" />
           {pillText}
         </span>
       </header>
@@ -200,7 +211,7 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
       <div className="px-5 pb-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <dl className="min-w-0">
           {rows.map(([label, value]) => (
-            <div key={label} className="flex items-baseline justify-between gap-4 h-9 border-t border-rule first:border-t-0">
+            <div key={label} className="flex items-center justify-between gap-4 min-h-[40px] border-t-2 border-rule first:border-t-0">
               <dt className="text-muted shrink-0">{label}</dt>
               <dd className="truncate text-right">{value}</dd>
             </div>
@@ -228,7 +239,7 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
             {line.spin ? (
               <Loader2 className="w-3.5 h-3.5 mt-[3px] shrink-0 animate-spin" aria-hidden="true" />
             ) : (
-              <span className={`w-2 h-2 mt-1.5 rounded-full shrink-0 ${TONE_DOT[line.tone]}`} aria-hidden="true" />
+              <span className={`w-2 h-2 mt-1.5 rounded-[2px] shrink-0 ${TONE_DOT[line.tone]}`} aria-hidden="true" />
             )}
             <span className="min-w-0 break-words">{line.text}</span>
           </p>
@@ -236,14 +247,14 @@ export const BackupsCard: React.FC<BackupsCardProps> = ({ job: jobProp, onReques
       </div>
 
       {job.overdue && (
-        <p className="mx-5 mb-4 px-3 py-2.5 rounded-card bg-pill-warning text-warning">
+        <p className="mx-5 mb-4 px-3.5 py-3 rounded-lg border-2 border-edge bg-pill-warning text-warning">
           The last backup is more than 90 minutes old and the server is running. Check the cron job on arm-free.
         </p>
       )}
 
       {!job.configured && job.message && <p className="mx-5 mb-5 -mt-1 text-muted">{job.message}</p>}
 
-      <p className="px-5 py-3 border-t border-line text-xs text-faint">
+      <p className="px-5 py-3 border-t-2 border-rule text-xs text-faint">
         arm-free copies Minecraft-Premium every 30 minutes and uploads the world save, so the download works while
         both VMs are off.
       </p>

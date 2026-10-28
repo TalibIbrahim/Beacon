@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download } from 'lucide-react';
+import { ChevronDown, Download } from 'lucide-react';
 import { BACKUP_DOWNLOAD_URL } from '../api';
 import { formatBytes, formatDate, formatRelative } from '../format';
 import { BackupInfo, BackupSource } from '../types';
@@ -17,7 +17,7 @@ const SOURCE_LABEL: Record<BackupSource, string> = {
 };
 
 const CodeBlock: React.FC<{ children: string }> = ({ children }) => (
-  <pre className="mt-2 p-3 rounded-card bg-ground border border-line text-[13px] leading-5 text-muted overflow-x-auto">
+  <pre className="mt-2 p-3 rounded-lg bg-raised border-2 border-rule text-[13px] leading-5 text-muted overflow-x-auto">
     <code>{children}</code>
   </pre>
 );
@@ -43,16 +43,12 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
   ];
 
   return (
-    <section className="panel" aria-labelledby="backup-heading">
-      <header className="flex items-center justify-between gap-3 px-5 pt-4 pb-3">
-        <h2 id="backup-heading" className="text-base font-semibold">
+    <section className="panel band-dirt" aria-labelledby="backup-heading">
+      <header className="flex items-center justify-between gap-3 px-5 pt-6 pb-3">
+        <h2 id="backup-heading" className="card-title">
           World save
         </h2>
-        <span
-          className={`h-6 px-2.5 inline-flex items-center rounded-full text-xs whitespace-nowrap ${
-            info.available ? 'bg-raised text-muted' : 'bg-pill-warning text-warning'
-          }`}
-        >
+        <span className={`pill ${info.available ? 'bg-raised text-muted' : 'bg-pill-warning text-warning'}`}>
           {info.available ? SOURCE_LABEL[info.source] : info.source === 'none' ? 'Not set up' : 'Waiting for upload'}
         </span>
       </header>
@@ -60,7 +56,7 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
       <div className="px-5 pb-5 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <dl className="min-w-0">
           {rows.map(([label, value]) => (
-            <div key={label} className="flex items-baseline justify-between gap-4 h-9 border-t border-rule first:border-t-0">
+            <div key={label} className="flex items-center justify-between gap-4 min-h-[40px] border-t-2 border-rule first:border-t-0">
               <dt className="text-muted shrink-0">{label}</dt>
               <dd className="truncate text-right">{value}</dd>
             </div>
@@ -95,13 +91,11 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
         </p>
       ) : null}
 
-      <div className="border-t border-line">
+      <div className="border-t-2 border-rule">
         <details className="group px-5">
-          <summary className="flex items-center justify-between h-11 cursor-pointer text-muted hover:text-ink list-none [&::-webkit-details-marker]:hidden">
+          <summary className="flex items-center justify-between min-h-[48px] cursor-pointer text-muted hover:text-ink list-none [&::-webkit-details-marker]:hidden">
             <span>{info.available ? 'Restore on a new server' : 'How to set up world backups'}</span>
-            <span className="text-faint group-open:rotate-180 transition-transform" aria-hidden="true">
-              ▾
-            </span>
+            <ChevronDown className="w-4 h-4 text-muted group-open:rotate-180 transition-transform" aria-hidden="true" />
           </summary>
           <div className="pb-5 space-y-4 text-muted">
             {!info.available && (
