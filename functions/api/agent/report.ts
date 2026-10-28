@@ -6,6 +6,7 @@ import { PayloadError, parseReport } from '../../_lib/agentpayload';
 import { readAgentJson } from '../../_lib/agent';
 import { clearBackupProbeCache } from '../../_lib/backup';
 import { recordRunReport } from '../../_lib/backupjob';
+import { emitEvents } from '../../_lib/events';
 import { addActivityLog } from '../../_lib/log';
 import { Env } from '../../_lib/types';
 
@@ -18,7 +19,7 @@ function formatSize(bytes: number | null): string | null {
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+  const { request, env, waitUntil } = context;
 
   const body = await readAgentJson(request);
   if (!body) return json({ error: 'Invalid JSON body (or over 8 KB)' }, 400);
@@ -39,6 +40,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     // A new archive may be in the bucket. /api/status also re-checks it after any report (see
     // resolveBackup's freshAfter); deleting the cached check here covers /api/backup in this location.
     await clearBackupProbeCache(env);
+
+    // Discord: every failed "Backup now", and failed scheduled runs at most once every 3 hours
+    if (!ok) {
+      waitUntil(
+        emitEvents(env, [
+          trigger === 'scheduled'
+            ? { type: 'backup_failed', source: 'agent', dedupeKey: 'backup_failed:scheduled', dedupeWindowMs: 3 * 60 * 60 * 1000, details: { reason: error ?? undefined } }
+            : { type: 'backup_failed', source: 'agent', details: { reason: error ?? undefined } },
+        ])
+      );
+    }
 
     // Only "Backup now" results go to the activity log; the 30-minute runs would crowd it out
     // (and each entry is a KV write, which the free plan limits to 1,000 a day)

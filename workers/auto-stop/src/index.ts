@@ -2,6 +2,7 @@
 // Runs every 10 minutes. If VM is RUNNING and Minecraft has 0 players for AUTO_STOP_MINUTES (default 30),
 // sends SOFTSTOP to OCI and writes an entry to the activity log.
 
+import { emitEvents } from '../../../functions/_lib/events';
 import { addActivityLog } from '../../../functions/_lib/log';
 import { getMinecraftStatus } from '../../../functions/_lib/mcstatus';
 import {
@@ -14,6 +15,9 @@ export interface AutoStopEnv {
   DASH_KV: KVNamespace;
   // Same D1 database as the dashboard (events, restore jobs); optional so the worker still runs without it
   DASH_DB?: D1Database;
+  // Discord alerts: same secret and settings as the dashboard
+  DISCORD_WEBHOOK_URL?: string;
+  DISCORD_EVENTS?: string;
   OCI_TENANCY_OCID: string;
   OCI_USER_OCID: string;
   OCI_FINGERPRINT: string;
@@ -82,6 +86,16 @@ async function handleAutoStopCheck(env: AutoStopEnv): Promise<string> {
         }),
         env.DASH_KV.delete(EMPTY_SINCE_KEY),
         env.DASH_KV.delete(ONLINE_SINCE_KEY),
+        // Shares its key with the dashboard and the agent, so the stop is posted once
+        emitEvents(env, [
+          {
+            type: 'server_stopped',
+            source: 'auto-stop',
+            dedupeKey: 'server_stopped',
+            dedupeWindowMs: 5 * 60 * 1000,
+            details: { reason: `idle auto-stop after ${elapsedMinutes}m with nobody online` },
+          },
+        ]),
       ]);
       return `Threshold reached (${elapsedMinutes}m >= ${thresholdMinutes}m). Sent SOFTSTOP.`;
     } else {

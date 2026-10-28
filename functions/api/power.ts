@@ -1,6 +1,7 @@
 // POST /api/power - Execute VM power actions with server-side validation and cooldowns
 
 import { getMaskedActor } from '../_lib/auth';
+import { emitEvents, NewEvent } from '../_lib/events';
 import { addActivityLog } from '../_lib/log';
 import { getMinecraftStatus } from '../_lib/mcstatus';
 import {
@@ -20,7 +21,7 @@ interface PowerRequestBody {
 }
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const { request, env } = context;
+  const { request, env, waitUntil } = context;
   const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
 
   if (!env.DASH_KV) {
@@ -172,7 +173,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
-  // 7. On success: record 30s cooldown and write activity log
+  // 7. On success: record 30s cooldown, write the activity log, tell Discord (in the background)
+  const event: NewEvent =
+    action === 'start'
+      ? { type: 'server_starting', source: 'dashboard', dedupeKey: 'server_starting', dedupeWindowMs: 3 * 60 * 1000 }
+      : action === 'restart'
+      ? { type: 'server_restarting', source: 'dashboard', dedupeKey: 'server_restarting', dedupeWindowMs: 3 * 60 * 1000 }
+      : {
+          type: 'server_stopped',
+          source: 'dashboard',
+          dedupeKey: 'server_stopped',
+          dedupeWindowMs: 5 * 60 * 1000,
+          details: { reason: 'from the dashboard' },
+        };
+  waitUntil(emitEvents(env, [event]));
+
   await Promise.all([
     recordPowerActionCooldown(env.DASH_KV),
     addActivityLog(env.DASH_KV, {

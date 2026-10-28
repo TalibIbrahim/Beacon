@@ -95,6 +95,9 @@ Set these in `.dev.vars` for local development, and as variables/secrets on the 
 | `AGENT_TOKEN` | no | Bearer token for arm-free's agent (`openssl rand -hex 32`, 32+ characters). Secret. Needs `DASH_DB` too |
 | `VM_BACKUP_TOKEN` | no | Secret path segment for the direct-from-VM download |
 | `TURNSTILE_SITEKEY` / `TURNSTILE_SECRET` | no | Cloudflare Turnstile bot check on the sign-in screen (set both) |
+| `DISCORD_WEBHOOK_URL` | no | Discord webhook for alerts. **Secret**, on this Worker and on `workers/auto-stop`. Only `https://discord.com/api/webhooks/...` links are accepted |
+| `DISCORD_EVENTS` | no | Which alerts to post: `all` (default), `none`, or a comma list of `server_starting`, `server_restarting`, `server_online`, `server_stopped`, `player_joined`, `player_left`, `backup_failed`, `restore_started`, `restore_finished` |
+| `DISCORD_SHOW_ADDRESS` | no | `true` to put the join address in the "online" alert. Off by default |
 
 | Binding | Required | What it is |
 |---|---|---|
@@ -390,6 +393,41 @@ them.
 Run either by hand to watch it (`~/beacon/mc-agent.sh poll` prints to the terminal instead of the
 log), and `~/beacon/pack-and-upload.sh --force` to upload the current copy straight away.
 
+## Discord alerts
+
+Set `DISCORD_WEBHOOK_URL` (in Discord: channel **Settings → Integrations → Webhooks → New Webhook →
+Copy Webhook URL**) as a secret on both Workers, and Beacon posts:
+
+| Alert | Posted by | When |
+|---|---|---|
+| 🟡 Server starting / restarting | dashboard | Start or Restart pressed ("from the dashboard": there is one shared password, so no names) |
+| 🟢 Server is online | agent | arm-free's probe gets an answer from Minecraft after it was down |
+| ➕ / ➖ Player joined / left | agent | A name appears in or disappears from the online list (see [Playtime and last seen](#playtime-and-last-seen)) |
+| 🔴 Server stopped | dashboard, auto-stop, agent | Stop pressed, idle auto-stop, or Minecraft stopped answering, with the reason |
+| ⚠️ Backup failed | agent | Every failed "Backup now"; failed scheduled backups at most once every 3 hours |
+| ♻️ / ✅ Restore started / finished | dashboard, agent | See [Backup history and restore points](#backup-history-and-restore-points) |
+
+How it stays quiet and safe:
+
+- **One post per event.** Every event is a row in D1 with a key; an event whose key already appeared
+  within a few minutes is skipped, in one atomic statement. A stop pressed in the dashboard and then
+  noticed by the agent a minute later is posted once.
+- **No storms.** Events from one request go out as one message, at most 5 posts a minute across all
+  sources. A post Discord rejects (429 included) is dropped and recorded, never retried.
+- **Never in the way.** Posting runs in `waitUntil` after the response, so a slow Discord never slows
+  the agent's poll or a power action.
+- **Untrusted names.** The server runs in offline mode, so a player name can be anything. Names are
+  stripped of control, zero-width and bidi characters, cut to 32 characters, Discord markdown is
+  escaped, and every post sets `allowed_mentions: {"parse": []}` so `@everyone` in a name pings nobody.
+- **Nothing private.** Messages carry no IP hashes and no tokens. The join address only appears with
+  `DISCORD_SHOW_ADDRESS=true`. The webhook URL is never logged.
+
+Every event is also kept in D1 for 60 days with how its post went (`sent`, `failed`, `limited`, `off`):
+
+```bash
+npx wrangler d1 execute beacon-agent --remote --command "SELECT type, source, discord, datetime(created_at/1000,'unixepoch') FROM events ORDER BY id DESC LIMIT 20"
+```
+
 ## Local development
 
 ```bash
@@ -446,10 +484,13 @@ appear in the activity log.
 cd workers/auto-stop
 npx wrangler secret put OCI_TENANCY_OCID     # and OCI_USER_OCID, OCI_FINGERPRINT,
                                              # OCI_PRIVATE_KEY_B64, OCI_INSTANCE_OCID, OCI_COMPARTMENT_OCID
+npx wrangler secret put DISCORD_WEBHOOK_URL  # optional: the same webhook as the dashboard
 npx wrangler deploy
 ```
 
-Set `OCI_REGION` and `AUTO_STOP_MINUTES` in `workers/auto-stop/wrangler.toml`.
+Set `OCI_REGION`, `AUTO_STOP_MINUTES` and (optionally) `DISCORD_EVENTS` in
+`workers/auto-stop/wrangler.toml`. It shares the dashboard's D1 database (`DASH_DB`) to record its
+stop event and de-duplicate it with the dashboard's.
 
 ## Security
 

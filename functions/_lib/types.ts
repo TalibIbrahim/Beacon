@@ -18,6 +18,10 @@ export interface Env {
   // D1: the arm-free agent, events, playtime, snapshots, restores (schema in migrations/)
   DASH_DB?: D1Database;
   AGENT_TOKEN?: string;
+  // Discord alerts (see functions/_lib/events.ts)
+  DISCORD_WEBHOOK_URL?: string;
+  DISCORD_EVENTS?: string;
+  DISCORD_SHOW_ADDRESS?: string;
 }
 
 export type VmState = 'STOPPED' | 'STARTING' | 'RUNNING' | 'STOPPING' | 'Busy';

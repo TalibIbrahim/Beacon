@@ -20,3 +20,5 @@ database_id = "eabc4e41-2f5a-4c05-830a-4b3e8bb53713"
 [vars]
 OCI_REGION = "me-dubai-1"
 AUTO_STOP_MINUTES = "30"
+# Discord alerts (DISCORD_WEBHOOK_URL is a secret: npx wrangler secret put DISCORD_WEBHOOK_URL)
+# DISCORD_EVENTS = "all"
