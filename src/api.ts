@@ -114,6 +114,14 @@ export async function sendPowerAction(
   });
 }
 
+// "Backup now": arm-free picks it up on its next poll (within a minute)
+export async function requestBackup(): Promise<{ state: 'pending' }> {
+  return await apiFetch<{ state: 'pending' }>('/api/backup/request', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
+}
+
 // The download itself is a plain link to this URL (see BackupCard): the browser follows the
 // stream or redirect natively, so there is no CORS and no buffering of a large file in memory.
 export const BACKUP_DOWNLOAD_URL = '/api/backup?download=1';

@@ -23,6 +23,10 @@ function describe(entry: ActivityLogEntry): string {
       return 'Wrong password';
     case 'BACKUP_DOWNLOAD':
       return 'Downloaded the world save';
+    case 'BACKUP_REQUEST':
+      return 'Asked for a backup';
+    case 'BACKUP_RUN':
+      return 'Backup from arm-free';
     default:
       return entry.action;
   }
@@ -52,14 +56,15 @@ export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
 
       {logs.length === 0 ? (
         <p className="mx-5 mb-5 px-3 py-2.5 rounded-card border border-dashed border-line text-muted">
-          Nothing has happened yet. Starts, stops, sign-ins and downloads show up here.
+          Nothing has happened yet. Starts, stops, sign-ins, backups and downloads show up here.
         </p>
       ) : (
         <ul className="px-5 pb-2">
           {visible.map((entry) => {
             const failed = entry.result === 'FAILED';
             const isLoginFailure = entry.action === 'FAILED_LOGIN';
-            const who = entry.actor === 'cron' ? 'Auto-stop' : entry.actor;
+            const named = entry.actor === 'cron' || entry.actor === 'agent';
+            const who = entry.actor === 'cron' ? 'Auto-stop' : entry.actor === 'agent' ? 'arm-free' : entry.actor;
             // The worker writes "Auto-stopped after 30m idle…"; the row title already says it
             const details = entry.details?.replace(/^Auto-stopped\s+/i, '');
             return (
@@ -74,7 +79,7 @@ export const ActivityLogCard: React.FC<ActivityLogCardProps> = ({ logs }) => {
                     )}
                   </div>
                   <div className="mt-0.5 text-xs text-faint truncate">
-                    <span className={entry.actor === 'cron' ? '' : 'font-mono'}>{who}</span>
+                    <span className={named ? '' : 'font-mono'}>{who}</span>
                     {details && <span> · {details}</span>}
                   </div>
                 </div>

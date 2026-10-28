@@ -6,6 +6,7 @@ import { PowerAction, StatusResponse, ToastMessage } from '../types';
 import { ActivityLogCard } from './ActivityLogCard';
 import { AppMark } from './AppMark';
 import { BackupCard } from './BackupCard';
+import { BackupsCard } from './BackupsCard';
 import { PlayersCard } from './PlayersCard';
 import { SkeletonLoader } from './SkeletonLoader';
 import { StatusPanel } from './StatusPanel';
@@ -290,7 +291,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
         ) : loading || !status || !phase ? (
           <SkeletonLoader />
         ) : (
-          // One column on phones (status, players, save, cost, activity); two from lg up.
+          // One column on phones (status, players, save, backups, cost, activity); two from lg up.
           // 1152 canvas - 48 padding = 1104 = 720 main + 24 gap + 360 rail
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
             <div className="contents lg:flex lg:flex-col lg:gap-6">
@@ -301,6 +302,9 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
                 <BackupCard backupInfo={status.backupInfo} onToast={addToast} />
               </div>
               <div className="order-4 lg:order-none">
+                <BackupsCard job={status.backupJob} onRequested={() => fetchStatus()} onToast={addToast} />
+              </div>
+              <div className="order-5 lg:order-none">
                 <UsageCard usage={status.computeUsage} trialDaysLeft={status.trialDaysLeft} region={status.region} />
               </div>
             </div>
@@ -308,7 +312,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
               <div className="order-2 lg:order-none">
                 <PlayersCard players={status.players} phase={phase} />
               </div>
-              <div className="order-5 lg:order-none">
+              <div className="order-6 lg:order-none">
                 <ActivityLogCard logs={status.recentLog} />
               </div>
             </div>

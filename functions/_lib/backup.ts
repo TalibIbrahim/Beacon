@@ -161,7 +161,7 @@ export async function resolveBackup(
         info: {
           available: false,
           source: 'url',
-          message: `Bucket link works, but ${BACKUP_OBJECT} is not there yet. Run scripts/backup-world.sh on the VM.`,
+          message: `Bucket link works, but ${BACKUP_OBJECT} is not there yet. Press "Backup now", or run scripts/pack-and-upload.sh on arm-free.`,
         },
       };
     }

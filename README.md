@@ -18,6 +18,9 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
 - **Players online**, from the public [mcsrvstat.us](https://mcsrvstat.us) API.
 - **World save download** (`.tar.gz`) from Cloudflare R2, Oracle Object Storage, or straight from the
   VM. It works while the VM is off when the save lives in a bucket. See [World saves](#world-saves).
+- **Backups from arm-free**: an always-on ARM VM copies the server every 30 minutes and uploads the
+  save. The dashboard shows whether its cron job is alive and when the last backup ran, and has a
+  **Backup now** button. See [Backups from arm-free](#backups-from-arm-free).
 - **Oracle cost and trial tracking**: the VM's size, an estimated hourly cost, days left on the trial,
   and whether the VM would fit Oracle's Always Free Ampere allowance.
 - **Activity log** of starts, stops, sign-ins and downloads (last 100 kept, IPs stored as a short hash).
@@ -28,9 +31,14 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
 ```
  Browser ──HTTPS──▶ Cloudflare Worker (static React app + Functions in functions/)
                         │  KV: sessions, rate limits, cooldown, activity log, caches
+                        │  D1: arm-free's heartbeat, the "Backup now" request, the last backup result
                         ├──▶ Oracle Cloud API (signed requests): VM state, power, public IP
                         ├──▶ mcsrvstat.us: Minecraft status and players
                         └──▶ R2 bucket / Object Storage link: world-latest.tar.gz
+                                                                  ▲
+ arm-free (always on) ── mc-agent.sh ──HTTPS──▶ /api/agent/*      │ PUT world-latest.tar.gz
+      │                  pack-and-upload.sh ──────────────────────┘
+      └── SSH: rsync pull, tmux save-off / save-all flush / save-on ──▶ Minecraft-Premium
 
  Oracle VM ── scripts/backup-world.sh ──▶ R2 / Object Storage / local folder for serve-backup.sh
 ```
@@ -39,7 +47,8 @@ stop the VM, and download the world save. It runs entirely on Cloudflare's free 
   or CDNs.
 - **Backend:** Cloudflare Pages Functions (`functions/`), compiled into a Worker by `npm run build`
   and deployed with `wrangler.jsonc`. Web Crypto only: no Node APIs, no crypto packages.
-- **Storage:** one KV namespace bound as `DASH_KV`; optionally an R2 bucket bound as `BACKUP_BUCKET`.
+- **Storage:** one KV namespace bound as `DASH_KV`; optionally a D1 database bound as `AGENT_DB` (for
+  the arm-free agent) and an R2 bucket bound as `BACKUP_BUCKET`.
 
 ## Quick start
 
@@ -72,13 +81,15 @@ Set these in `.dev.vars` for local development, and as variables/secrets on the 
 | `PASSWORD_HASH` | yes | Output of `npm run hash-password` |
 | `SESSION_SECRET` | yes | Random string of 32+ characters for signing session cookies |
 | `TRIAL_END` | no | When the Oracle trial ends, ISO 8601 (`2026-12-01T00:00:00Z`). Leave out to hide the countdown |
-| `BACKUP_URL` | no | Oracle Object Storage pre-authenticated request (or any HTTPS link) to the world save |
+| `BACKUP_URL` | no | Oracle Object Storage pre-authenticated request (or any HTTPS link) to the world save. Set it as a secret and use a **read-only** link: signed-in users are redirected to it |
+| `AGENT_TOKEN` | no | Bearer token for arm-free's agent (`openssl rand -hex 32`, 32+ characters). Secret. Needs `AGENT_DB` too |
 | `VM_BACKUP_TOKEN` | no | Secret path segment for the direct-from-VM download |
 | `TURNSTILE_SITEKEY` / `TURNSTILE_SECRET` | no | Cloudflare Turnstile bot check on the sign-in screen (set both) |
 
 | Binding | Required | What it is |
 |---|---|---|
 | `DASH_KV` | yes | KV namespace (already in `wrangler.jsonc`) |
+| `AGENT_DB` | no | D1 database for the arm-free agent (commented block in `wrangler.jsonc`) |
 | `BACKUP_BUCKET` | no | R2 bucket holding `world-latest.tar.gz` |
 
 ### Password hash
@@ -228,12 +239,160 @@ tar -xzf minecraft-world-*.tar.gz -C /opt/minecraft
 Then start the server as usual. Moving to an Always Free Ampere (ARM) VM works the same way: world
 files are not tied to the CPU.
 
+## Backups from arm-free
+
+Minecraft runs on the paid VM **Minecraft-Premium** (`10.0.0.16`), which auto-stop turns off when it
+is idle. The free, always-on ARM VM **arm-free** (same subnet) copies it every 30 minutes with
+`~/mc-backup.sh` (rsync into `~/mc-backup/latest`, daily snapshots in `~/mc-backup/daily`, the time of
+each success in `~/mc-backup/.last_success`). Two scripts in `scripts/` connect that to Beacon:
+
+- **`mc-agent.sh`** runs from cron. `poll` (every minute) sends a heartbeat and runs a backup when
+  someone pressed **Backup now**; `scheduled` (every 30 minutes) is the regular backup and replaces
+  calling `~/mc-backup.sh` from cron directly.
+- **`pack-and-upload.sh`** turns `~/mc-backup/latest` into `world-latest.tar.gz` and uploads it to
+  Oracle Object Storage, so the dashboard's **Download .tar.gz** works while both VMs are off. It
+  runs after every backup and skips the upload when nothing changed since the last one.
+
+### How a backup flows
+
+```
+ Browser ── "Backup now" ──▶ POST /api/backup/request ──▶ D1: request = pending (one at a time, 5 min cooldown)
+                                                              │
+ arm-free, cron every minute: mc-agent.sh poll                │
+   │ ── HTTPS, Bearer AGENT_TOKEN ──▶ POST /api/agent/poll ───┘  heartbeat saved; pending → running, once
+   │ ◀─────────────────────── { "backup": true } ───────────────  (the only thing Beacon ever answers)
+   │
+   ├─ flock ~/mc-backup/.lock                        (scheduled runs take the same lock: no overlap)
+   ├─ ssh ubuntu@10.0.0.16  tmux "mc": save-off, save-all flush, wait for "Saved the game" (≤30 s)
+   ├─ ~/mc-backup.sh        rsync Minecraft-Premium → ~/mc-backup/latest
+   ├─ ssh ubuntu@10.0.0.16  tmux "mc": save-on       (always, from a trap, even if the copy fails)
+   ├─ pack-and-upload.sh    world-latest.tar.gz ── PUT (write link) ──▶ Oracle Object Storage
+   └─ POST /api/agent/report { ok, finishedAt, sizeBytes, error? } ──▶ D1: done / failed
+
+ Browser ── Download ──▶ GET /api/backup?download=1 ── 302 to the read link ──▶ Oracle Object Storage
+```
+
+Beacon never connects to arm-free, and arm-free opens no ports: it only makes outbound HTTPS calls.
+Beacon's answer to a poll is `{ "backup": true | false }` and nothing else, so it cannot be used to run
+commands on arm-free.
+
+The agent's state lives in D1 instead of KV. A heartbeat is a write every minute, and KV's free plan
+allows 1,000 writes a day (Beacon already uses a share of that while the dashboard is open). D1 also
+hands a request to the agent exactly once, where a KV write can take a minute to reach other locations.
+
+### What the Backups panel shows
+
+| | |
+|---|---|
+| **Cron running / Not responding** | Running while arm-free has polled in the last 3 minutes, with when it was last seen |
+| **Last backup** | Time from `~/mc-backup/.last_success`, and the size of the uploaded archive. Turns amber, with a warning, when it is over 90 minutes old **while Minecraft-Premium is running**, counted from the later of the last backup and when the server came online. No warning while the VM is off |
+| **Schedule** | Whether the 30-minute `mc-agent.sh scheduled` line is in arm-free's crontab and the cron service is active |
+| **Backup now** | Requested → Running → Done (with size) or Failed (with a short reason). Disabled while one is pending or running, and for 5 minutes after each request. A request nobody picks up within 10 minutes, or that never reports back within an hour, shows as failed |
+
+If Minecraft-Premium is off when you press **Backup now**, the run fails with "Minecraft-Premium is
+off or unreachable" and the download keeps the last backup. Scheduled runs while it is off do nothing.
+
+### What goes into the archive
+
+The same selection as `backup-world.sh`, taken from `~/mc-backup/latest`: the world named by
+`level-name` in `server.properties` (`FINAL_FINAL_PAKKA_FINAL`) with its `_nether` and `_the_end`
+folders, `server.properties`, `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json`
+and `usercache.json`. Logs, `session.lock` and the other world folders are left out. The archive is
+checked with `gzip -t` before it is uploaded.
+
+### Saving before the copy
+
+The server runs in tmux session `mc` as `ubuntu` (started by `minecraft.service`). Before each copy
+the agent runs one SSH command as `ubuntu` that sends `save-off` and `save-all flush`, then waits up to
+30 seconds for `Saved the game` in `logs/latest.log`. After the copy it always sends `save-on`. If
+`tmux has-session -t mc` fails (server not running) or SSH cannot connect (VM off), it skips this and
+your two-pass rsync copies the files as they are. RCON is not used. To turn the step off, set
+`MC_TMUX_SESSION=` (empty) in the env file.
+
+If the agent is killed between `save-off` and `save-on`, the next backup (at most 30 minutes later)
+sends `save-on` again. To do it by hand on Minecraft-Premium: `tmux send-keys -t mc save-on Enter`.
+
+### Files on arm-free
+
+| Path | |
+|---|---|
+| `~/beacon/mc-agent.sh`, `~/beacon/pack-and-upload.sh` | The two scripts (`chmod 700`) |
+| `~/.config/beacon/agent.env` | `BEACON_URL`, `AGENT_TOKEN`, `UPLOAD_URL` (`chmod 600`; the scripts refuse to run otherwise). See `scripts/mc-agent-env.example` |
+| `~/mc-backup/.lock` | flock shared by every backup |
+| `~/mc-backup/upload/world-latest.tar.gz` | The last archive built, plus `.uploaded_stamp`, the backup it came from |
+| `~/mc-backup/agent.log` | What the agent did (trimmed past 1 MB). Polls only log problems |
+
+The env file holds `KEY=value` lines and is parsed, never executed. The token and the upload link are
+handed to curl through a file descriptor, so they never appear in `ps`, and the scripts never print
+them.
+
+| Setting | Default | |
+|---|---|---|
+| `BEACON_URL` | none | The dashboard's `https://` address |
+| `AGENT_TOKEN` | none | Same value as Beacon's `AGENT_TOKEN` |
+| `UPLOAD_URL` | none | Object Storage pre-authenticated request with write access, ending in `/o/` |
+| `PREMIUM_SSH` | `ubuntu@10.0.0.16` | SSH target for the save-off / save-on step (a `~/.ssh/config` alias works) |
+| `MC_TMUX_SESSION` | `mc` | tmux session running the server; empty skips the step |
+| `MC_REMOTE_DIR` | `/home/ubuntu/minecraft` | Server folder on Minecraft-Premium (for `logs/latest.log`) |
+| `BACKUP_ROOT` / `BACKUP_CMD` | `~/mc-backup` / `~/mc-backup.sh` | Your existing backup folder and script |
+
+### Set it up
+
+1. **Object Storage** (Oracle console, Dubai region): create a private bucket, e.g. `beacon-saves`,
+   with object versioning off so each upload replaces the last. On the bucket, create two
+   **bucket-level pre-authenticated requests** with a long expiry and object listing off:
+   - *Permit object reads*: Beacon's `BACKUP_URL`;
+   - *Permit object writes*: arm-free's `UPLOAD_URL`.
+
+   Both URLs end in `/o/`. One read+write link works for both, but Beacon redirects every download to
+   `BACKUP_URL`, so anyone signed in could copy it from their browser and overwrite the save. The
+   archive takes a few hundred MB of the 20 GB Always Free allowance.
+2. **Beacon:** create the database and the token, then deploy:
+
+   ```bash
+   npx wrangler d1 create beacon-agent      # put the id in the d1_databases block in wrangler.jsonc (binding AGENT_DB)
+   openssl rand -hex 32                     # the token: for the next command and the env file
+   npx wrangler secret put AGENT_TOKEN
+   npx wrangler secret put BACKUP_URL       # the read link
+   npm run build && npx wrangler deploy
+   ```
+3. **arm-free:** install cron and curl (Ubuntu Minimal ships without cron), copy the scripts over and
+   write the env file:
+
+   ```bash
+   sudo apt-get update && sudo apt-get install -y cron curl
+   sudo systemctl enable --now cron
+   mkdir -p ~/beacon ~/.config/beacon
+   # from your PC: scp scripts/mc-agent.sh scripts/pack-and-upload.sh ubuntu@<arm-free-public-ip>:beacon/
+   chmod 700 ~/beacon/*.sh
+   (umask 077 && nano ~/.config/beacon/agent.env)   # BEACON_URL, AGENT_TOKEN, UPLOAD_URL
+   chmod 600 ~/.config/beacon/agent.env
+   ```
+4. **Cron on arm-free** (`crontab -e`): replace the line that runs `~/mc-backup.sh` with these two, so
+   every backup goes through the shared lock:
+
+   ```cron
+   * * * * * /home/ubuntu/beacon/mc-agent.sh poll
+   */30 * * * * /home/ubuntu/beacon/mc-agent.sh scheduled
+   ```
+
+Run either by hand to watch it (`~/beacon/mc-agent.sh poll` prints to the terminal instead of the
+log), and `~/beacon/pack-and-upload.sh --force` to upload the current copy straight away.
+
 ## Local development
 
 ```bash
 npm run build
 npx wrangler pages dev dist --kv DASH_KV                                   # http://localhost:8788
 npx wrangler pages dev dist --kv DASH_KV --r2 BACKUP_BUCKET=beacon-backups # with a local R2 bucket
+npx wrangler pages dev dist --kv DASH_KV --d1 AGENT_DB                     # with a local agent database
+```
+
+With `AGENT_TOKEN` in `.dev.vars`, you can play the agent with curl:
+
+```bash
+curl -s -X POST http://localhost:8788/api/agent/poll -H "Authorization: Bearer $AGENT_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"lastSuccess":"2026-10-28T10:00:00Z","busy":false}'
 ```
 
 To put a test archive in the local bucket:
@@ -257,8 +416,8 @@ npx wrangler deploy
 
 Add the variables from [Configuration](#configuration) under **Settings → Variables and Secrets**
 (the private key, password hash and session secret as secrets). `keep_vars` in `wrangler.jsonc` keeps
-dashboard variables across deploys. The KV namespace is already bound; R2 is bound by the commented
-block in `wrangler.jsonc`.
+dashboard variables across deploys. The KV namespace and the `AGENT_DB` database are already bound;
+R2 is bound by the commented block in `wrangler.jsonc`.
 
 ### Auto-stop worker
 
@@ -287,7 +446,17 @@ Set `OCI_REGION` and `AUTO_STOP_MINUTES` in `workers/auto-stop/wrangler.toml`.
   Cloudflare's challenge domain when Turnstile is on).
 - **Power actions** are re-checked on the server: valid state, cooldown, and players online.
 - **World saves** from R2 are only served to signed-in users. Object Storage and VM links are secrets:
-  anyone who has the full URL can download the save.
+  anyone who has the full URL can download the save. Give Beacon a read-only link, since signed-in
+  users see it in the redirect, and keep the write link on arm-free only.
+- **Agent routes** (`/api/agent/poll`, `/api/agent/report`) are the only routes without the session
+  cookie and CSRF checks. They need `Authorization: Bearer <AGENT_TOKEN>` (compared in constant time
+  over SHA-256 digests), accept only `POST` with a JSON body under 1 KB (enforced while reading, even
+  without `Content-Length`), and allow 10 calls a minute each. 10 wrong tokens lock an IP out for
+  15 minutes. Any other `/api/agent/...` path still needs a session. Poll answers only
+  `{ "backup": true | false }`; reported fields are type-checked, and error text is cut to one line of
+  200 characters before it reaches the dashboard.
+- **Backup now** is a normal dashboard action: session, CSRF, one request at a time, one every
+  5 minutes, written to the activity log. It only sets a flag; arm-free decides what to run.
 
 ## API
 
@@ -296,10 +465,13 @@ Set `OCI_REGION` and `AUTO_STOP_MINUTES` in `workers/auto-stop/wrangler.toml`.
 | `POST /api/login` | public | `{ password, turnstileToken? }` → sets the session cookie |
 | `GET /api/config` | public | `{ turnstileSiteKey }` for the sign-in screen |
 | `GET /api/session` | session | 200 if the cookie is valid, 401 if not |
-| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity |
+| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity, and `backupJob` (heartbeat, last backup, request state, cooldown, overdue) |
 | `POST /api/power` | session | `{ action: "start" \| "stop" \| "restart", force? }`; 409 with `playerCount` if people are online |
 | `GET /api/backup` | session | Where the world save is and whether it can be downloaded |
 | `GET /api/backup?download=1` | session | The download (stream from R2, or a redirect) |
+| `POST /api/backup/request` | session | "Backup now": `{}` → `{ state: "pending" }`; 409 if one is pending or running, 429 with `retryAfter` during the 5-minute cooldown |
+| `POST /api/agent/poll` | agent token | Heartbeat `{ lastSuccess?, archiveBytes?, busy?, cronActive?, scheduleInstalled? }` → `{ backup: true \| false }` |
+| `POST /api/agent/report` | agent token | `{ trigger: "requested" \| "scheduled", ok, finishedAt, sizeBytes?, error? }` → `{ recorded: true }` |
 | `POST /api/logout` | session | Clears the cookie |
 
 ## Project layout
@@ -311,7 +483,8 @@ functions/            Cloudflare Functions (API + middleware)
 src/                  React app
   components/         screens and panels
   serverState.ts      VM + Minecraft state → what the screen says
-scripts/              hash-password, backup-world.sh, serve-backup.sh
+scripts/              hash-password, backup-world.sh, serve-backup.sh,
+                      mc-agent.sh + pack-and-upload.sh (arm-free)
 workers/auto-stop/    idle shutdown cron worker
 public/               fonts (Public Sans, OFL), favicon, security headers
 ```
@@ -328,3 +501,11 @@ public/               fonts (Public Sans, OFL), favicon, security headers
 - **The VM download fails or never finishes**: `serve-backup.sh` is not running, or port 8080 is
   closed in the security list or by iptables.
 - **Signed out after deploying**: changing `SESSION_SECRET` invalidates existing sessions.
+- **Backups says "Not responding"**: arm-free has not polled for 3 minutes. On arm-free, check
+  `systemctl is-active cron`, `crontab -l` and `tail ~/mc-backup/agent.log`. "Poll failed" there means
+  a wrong `BEACON_URL` or a token that does not match Beacon's `AGENT_TOKEN`.
+- **"Backup now" stays on Requested**: same as above; the agent picks requests up only when it polls.
+- **Schedule says "Not in crontab"**: the `*/30 ... mc-agent.sh scheduled` line is missing, so only
+  "Backup now" makes backups.
+- **The flush is always skipped**: from arm-free, while the server is up, run
+  `ssh ubuntu@10.0.0.16 tmux has-session -t mc`. It must succeed without a password prompt.

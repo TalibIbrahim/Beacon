@@ -107,15 +107,15 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
             {!info.available && (
               <div>
                 <p>
-                  On the VM, pack the world and upload it to the bucket Beacon reads from (an R2 bucket bound as{' '}
-                  <code className="text-ink">BACKUP_BUCKET</code>, or a link in <code className="text-ink">BACKUP_URL</code>):
+                  On arm-free, pack the latest backup and upload it to the Object Storage bucket in{' '}
+                  <code className="text-ink">BACKUP_URL</code> (mc-agent.sh does this after every backup):
                 </p>
-                <CodeBlock>{`MC_DIR=/opt/minecraft bash scripts/backup-world.sh`}</CodeBlock>
+                <CodeBlock>{`~/beacon/pack-and-upload.sh --force`}</CodeBlock>
               </div>
             )}
             <div>
               <p>Unpack the downloaded save into the new server's folder, then start it:</p>
-              <CodeBlock>{`tar -xzf minecraft-world-*.tar.gz -C /opt/minecraft`}</CodeBlock>
+              <CodeBlock>{`tar -xzf minecraft-world-*.tar.gz -C /home/ubuntu/minecraft`}</CodeBlock>
             </div>
             <p className="text-faint">The full steps are in the README under “World saves”.</p>
           </div>

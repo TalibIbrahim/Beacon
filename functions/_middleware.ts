@@ -1,6 +1,7 @@
 // Cloudflare Pages Functions Middleware
 // Enforces security headers, CSRF protection, input body limits, and authentication.
 
+import { AGENT_API_PATHS, guardAgentRequest } from './_lib/agent';
 import { getSessionCookie, verifySessionToken } from './_lib/auth';
 import { Env } from './_lib/types';
 
@@ -37,8 +38,16 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    // 3. CSRF Protection for all POST requests
-    if (request.method === 'POST') {
+    // 3. The backup agent on arm-free (curl, no cookie, no Origin) uses a bearer token instead
+    //    of the session and CSRF checks below. Only these exact paths are exempt.
+    const isAgentRoute = AGENT_API_PATHS.has(path);
+    if (isAgentRoute) {
+      const blocked = await guardAgentRequest(request, env, path);
+      if (blocked) return blocked;
+    }
+
+    // 4. CSRF Protection for all other POST requests
+    if (request.method === 'POST' && !isAgentRoute) {
       const origin = request.headers.get('Origin');
       const reqWith = request.headers.get('X-Requested-With');
       const contentType = request.headers.get('Content-Type') || '';
@@ -68,8 +77,8 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 4. Authentication enforcement on all /api/* routes except the public ones
-    if (!PUBLIC_API_PATHS.has(path)) {
+    // 5. Authentication enforcement on all /api/* routes except the public ones and the agent's
+    if (!PUBLIC_API_PATHS.has(path) && !isAgentRoute) {
       const token = getSessionCookie(request);
       if (!token) {
         return new Response(JSON.stringify({ error: 'Unauthorized: Session missing' }), {
