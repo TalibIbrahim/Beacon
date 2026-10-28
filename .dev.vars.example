@@ -22,6 +22,10 @@ TRIAL_END=2099-12-31T00:00:00Z
 #   - an Oracle Object Storage pre-authenticated request URL, ending in /o/ for a bucket link
 # BACKUP_URL=https://objectstorage.me-dubai-1.oraclecloud.com/p/<token>/n/<namespace>/b/<bucket>/o/
 
+# Optional: backups from arm-free (mc-agent.sh). Needs the AGENT_DB D1 binding too
+# (local dev: --d1 AGENT_DB). Same value as AGENT_TOKEN in arm-free's agent.env; 32+ characters.
+# AGENT_TOKEN=<openssl rand -hex 32>
+
 # Optional: secret path segment for the direct-from-VM fallback (must match the VM's VM_BACKUP_TOKEN)
 # VM_BACKUP_TOKEN=<random-string>
 

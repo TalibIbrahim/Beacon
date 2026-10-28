@@ -13,9 +13,18 @@
       "binding": "DASH_KV",
       "id": "ea5e590c0bd749b0acd7fe941cc9b706"
     }
+  ],
+  // Backups from arm-free ("Backup now", heartbeat). The binding must be AGENT_DB (not the "DB"
+  // wrangler suggests). Tables are created on first use.
+  "d1_databases": [
+    {
+      "binding": "AGENT_DB",
+      "database_name": "beacon-agent",
+      "database_id": "eabc4e41-2f5a-4c05-830a-4b3e8bb53713"
+    }
   ]
   // World saves in Cloudflare R2: create the bucket first (npx wrangler r2 bucket create beacon-backups),
-  // then uncomment this (and add a comma after the kv_namespaces block above).
+  // then uncomment this (and add a comma after the d1_databases block above).
   // "r2_buckets": [
   //   {
   //     "binding": "BACKUP_BUCKET",

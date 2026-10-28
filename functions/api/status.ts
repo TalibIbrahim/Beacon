@@ -5,7 +5,8 @@ import { getMinecraftStatus } from '../_lib/mcstatus';
 import { getOciInstanceDetails, getOciPublicIp } from '../_lib/oci';
 import { checkPowerCooldown } from '../_lib/ratelimit';
 import { ResolvedBackup, resolveBackup } from '../_lib/backup';
-import { Env, MinecraftState, StatusResponse, VmState } from '../_lib/types';
+import { getBackupJobInfo } from '../_lib/backupjob';
+import { BackupJobInfo, Env, MinecraftState, StatusResponse, VmState } from '../_lib/types';
 
 const ONLINE_SINCE_KEY = 'online_since';
 
@@ -81,12 +82,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 6. Recent activity log and world save, in parallel
-    const [recentLog, backup] = await Promise.all([
+    // 6. Recent activity log, world save and arm-free backups, in parallel
+    const [recentLog, backup, backupJob] = await Promise.all([
       getRecentActivityLog(env.DASH_KV, 20),
       resolveBackup(env, async () => ({ vmState, publicIp })).catch((err): ResolvedBackup => {
         console.error('Backup resolution failed:', err instanceof Error ? err.message : err);
         return { info: { available: false, source: 'none', message: 'Could not check the backup storage.' } };
+      }),
+      getBackupJobInfo(env, { vmState, onlineSince }).catch((err): BackupJobInfo | undefined => {
+        console.error('Backup job status failed:', err instanceof Error ? err.message : err);
+        return undefined;
       }),
     ]);
 
@@ -104,6 +109,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       powerCooldownSeconds: powerCooldown.onCooldown ? powerCooldown.remainingSeconds : 0,
       computeUsage,
       backupInfo: backup.info,
+      backupJob,
     };
 
     return new Response(JSON.stringify(response), {

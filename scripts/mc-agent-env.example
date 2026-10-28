@@ -1,0 +1,18 @@
+# Beacon backup agent on arm-free. Copy to ~/.config/beacon/agent.env and run:
+#   chmod 600 ~/.config/beacon/agent.env
+# KEY=value lines only (no spaces around =, no `export`). Nothing in this file is executed.
+
+# The dashboard, no trailing slash
+BEACON_URL=https://beacon.example.workers.dev
+# Same value as the AGENT_TOKEN secret in Beacon (openssl rand -hex 32)
+AGENT_TOKEN=
+# Object Storage pre-authenticated request with write access; ends in /o/
+UPLOAD_URL=
+
+# Optional (defaults shown). Comments go on their own line, never after a value.
+# PREMIUM_SSH=ubuntu@10.0.0.16
+# tmux session running the server; set it empty (MC_TMUX_SESSION=) to skip save-off / save-all flush
+# MC_TMUX_SESSION=mc
+# MC_REMOTE_DIR=/home/ubuntu/minecraft
+# BACKUP_ROOT=/home/ubuntu/mc-backup
+# BACKUP_CMD=/home/ubuntu/mc-backup.sh

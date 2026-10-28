@@ -10,7 +10,15 @@ export interface PlayerInfo {
 export interface ActivityLogEntry {
   id: string;
   timestamp: string;
-  action: 'START' | 'STOP' | 'RESTART' | 'LOGIN' | 'FAILED_LOGIN' | 'BACKUP_DOWNLOAD';
+  action:
+    | 'START'
+    | 'STOP'
+    | 'RESTART'
+    | 'LOGIN'
+    | 'FAILED_LOGIN'
+    | 'BACKUP_DOWNLOAD'
+    | 'BACKUP_REQUEST'
+    | 'BACKUP_RUN';
   result: 'SUCCESS' | 'FAILED';
   actor: string;
   details?: string;
@@ -26,6 +34,39 @@ export interface BackupInfo {
   sizeBytes?: number;
   lastModified?: string;
   message?: string;
+}
+
+export type BackupRequestState = 'pending' | 'running' | 'done' | 'failed';
+
+export interface BackupJobInfo {
+  configured: boolean;
+  message?: string;
+  agent: {
+    lastSeen: string | null;
+    responding: boolean;
+    busy: boolean;
+    cronActive: boolean | null;
+    scheduleInstalled: boolean | null;
+  };
+  lastBackupAt: string | null;
+  lastBackupBytes: number | null;
+  lastRun: {
+    trigger: 'requested' | 'scheduled';
+    ok: boolean;
+    finishedAt: string;
+    sizeBytes?: number;
+    error?: string;
+  } | null;
+  request: {
+    state: BackupRequestState;
+    requestedAt: string;
+    startedAt?: string;
+    finishedAt?: string;
+    sizeBytes?: number;
+    error?: string;
+  } | null;
+  cooldownSeconds: number;
+  overdue: boolean;
 }
 
 export interface ComputeUsage {
@@ -57,6 +98,7 @@ export interface StatusResponse {
   powerCooldownSeconds?: number;
   computeUsage?: ComputeUsage;
   backupInfo?: BackupInfo;
+  backupJob?: BackupJobInfo;
 }
 
 export type PowerAction = 'start' | 'stop' | 'restart';
