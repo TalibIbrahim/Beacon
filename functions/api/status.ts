@@ -82,18 +82,22 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }
     }
 
-    // 6. Recent activity log, world save and arm-free backups, in parallel
-    const [recentLog, backup, backupJob] = await Promise.all([
+    // 6. Recent activity log and arm-free backups, then the world save: a backup reported after the
+    //    bucket was last checked makes resolveBackup check it again, so "Saved" updates at once
+    const [recentLog, backupJob] = await Promise.all([
       getRecentActivityLog(env.DASH_KV, 20),
-      resolveBackup(env, async () => ({ vmState, publicIp })).catch((err): ResolvedBackup => {
-        console.error('Backup resolution failed:', err instanceof Error ? err.message : err);
-        return { info: { available: false, source: 'none', message: 'Could not check the backup storage.' } };
-      }),
       getBackupJobInfo(env, { vmState, onlineSince }).catch((err): BackupJobInfo | undefined => {
         console.error('Backup job status failed:', err instanceof Error ? err.message : err);
         return undefined;
       }),
     ]);
+    const lastReportMs = backupJob?.lastRun ? new Date(backupJob.lastRun.finishedAt).getTime() : 0;
+    const backup = await resolveBackup(env, async () => ({ vmState, publicIp }), lastReportMs).catch(
+      (err): ResolvedBackup => {
+        console.error('Backup resolution failed:', err instanceof Error ? err.message : err);
+        return { info: { available: false, source: 'none', message: 'Could not check the backup storage.' } };
+      }
+    );
 
     const response: StatusResponse = {
       vmState,

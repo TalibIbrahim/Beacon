@@ -30,6 +30,11 @@ interface ProbeResult {
   lastModified?: string;
 }
 
+interface CachedProbe extends ProbeResult {
+  url: string;
+  checkedAt?: number; // epoch ms
+}
+
 export function getBackupUrl(env: Env): string | null {
   const raw = env.BACKUP_URL?.trim();
   if (!raw) return null;
@@ -79,11 +84,13 @@ async function probeUrl(url: string): Promise<ProbeResult> {
   }
 }
 
-// Cached for a minute so the 10-second dashboard poll does not hit the bucket every time
-async function probeUrlCached(env: Env, url: string): Promise<ProbeResult | null> {
+// Cached for a minute so the 10-second dashboard poll does not hit the bucket every time.
+// freshAfter (epoch ms, e.g. when arm-free last reported a backup) skips a cache entry from before
+// then. That works in every Cloudflare location at once, unlike deleting the KV key.
+async function probeUrlCached(env: Env, url: string, freshAfter = 0): Promise<ProbeResult | null> {
   try {
-    const cached = await env.DASH_KV.get<ProbeResult & { url: string }>(PROBE_CACHE_KEY, 'json');
-    if (cached && cached.url === url) return cached;
+    const cached = await env.DASH_KV.get<CachedProbe>(PROBE_CACHE_KEY, 'json');
+    if (cached && cached.url === url && (cached.checkedAt ?? 0) > freshAfter) return cached;
   } catch {
     // ignore KV errors
   }
@@ -97,7 +104,8 @@ async function probeUrlCached(env: Env, url: string): Promise<ProbeResult | null
   }
 
   try {
-    await env.DASH_KV.put(PROBE_CACHE_KEY, JSON.stringify({ ...result, url }), {
+    const entry: CachedProbe = { ...result, url, checkedAt: Date.now() };
+    await env.DASH_KV.put(PROBE_CACHE_KEY, JSON.stringify(entry), {
       expirationTtl: PROBE_CACHE_TTL_SECONDS,
     });
   } catch {
@@ -116,7 +124,8 @@ export async function clearBackupProbeCache(env: Env): Promise<void> {
 
 export async function resolveBackup(
   env: Env,
-  getVm: () => Promise<VmContext>
+  getVm: () => Promise<VmContext>,
+  freshAfter = 0
 ): Promise<ResolvedBackup> {
   // 1. Cloudflare R2
   if (env.BACKUP_BUCKET) {
@@ -146,7 +155,7 @@ export async function resolveBackup(
   // 2. External URL (Oracle Object Storage pre-authenticated request, or any HTTPS link)
   const backupUrl = getBackupUrl(env);
   if (backupUrl) {
-    const probe = await probeUrlCached(env, backupUrl);
+    const probe = await probeUrlCached(env, backupUrl, freshAfter);
     if (!probe) {
       return {
         info: {

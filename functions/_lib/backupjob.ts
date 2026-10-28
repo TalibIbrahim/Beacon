@@ -119,7 +119,7 @@ export async function recordHeartbeatAndClaim(db: D1Database, hb: Heartbeat): Pr
          VALUES (1, ?1, ?2, ?3, ?4, ?5, ?6)
          ON CONFLICT(id) DO UPDATE SET
            seen_at = excluded.seen_at,
-           last_success = COALESCE(excluded.last_success, agent_heartbeat.last_success),
+           last_success = NULLIF(MAX(COALESCE(excluded.last_success, 0), COALESCE(agent_heartbeat.last_success, 0)), 0),
            archive_bytes = COALESCE(excluded.archive_bytes, agent_heartbeat.archive_bytes),
            busy = excluded.busy,
            cron_active = excluded.cron_active,
@@ -145,6 +145,9 @@ export interface RunReport {
 }
 
 // Record a finished run. Returns true when it closed the dashboard's "Backup now" request.
+// A successful run also moves the heartbeat's last backup time and size forward right away, so the
+// dashboard does not wait for the next poll (and shows the real finish time, not when the copy began).
+// The request update stays at index 1 of the batch.
 export async function recordRunReport(db: D1Database, report: RunReport): Promise<boolean> {
   const statements = [
     db
@@ -165,6 +168,18 @@ export async function recordRunReport(db: D1Database, report: RunReport): Promis
            WHERE id = 1 AND state = 'running'`
         )
         .bind(report.ok ? 'done' : 'failed', report.finishedAt, report.sizeBytes, report.error)
+    );
+  }
+  if (report.ok) {
+    statements.push(
+      db
+        .prepare(
+          `UPDATE agent_heartbeat SET
+             last_success = MAX(COALESCE(last_success, 0), ?1),
+             archive_bytes = COALESCE(?2, archive_bytes)
+           WHERE id = 1`
+        )
+        .bind(report.finishedAt, report.sizeBytes)
     );
   }
   const results = await db.batch(statements);
@@ -273,8 +288,9 @@ export async function getBackupJobInfo(
   const now = Date.now();
   const responding = Boolean(hb && now - hb.seen_at < HEARTBEAT_STALE_MS);
 
-  // .last_success on arm-free is the source of truth; a successful run report is the fallback
-  const lastBackupMs = hb?.last_success ?? (run?.ok ? run.finished_at : null);
+  // The later of a successful report's finishedAt and .last_success on arm-free (which only arrives
+  // with the next heartbeat, and may hold when the copy started)
+  const lastBackupMs = Math.max(hb?.last_success ?? 0, run?.ok ? run.finished_at : 0) || null;
 
   let request: BackupJobInfo['request'] = null;
   let cooldownSeconds = 0;

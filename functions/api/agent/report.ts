@@ -3,6 +3,7 @@
 // Body: { ok, finishedAt, sizeBytes?, error?, trigger: "requested" | "scheduled" }
 
 import { parseBool, parseBytes, parseMessage, parseTime, readAgentJson } from '../../_lib/agent';
+import { clearBackupProbeCache } from '../../_lib/backup';
 import { recordRunReport } from '../../_lib/backupjob';
 import { addActivityLog } from '../../_lib/log';
 import { Env } from '../../_lib/types';
@@ -31,6 +32,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   try {
     const closedRequest = await recordRunReport(env.AGENT_DB!, { trigger, ok, finishedAt, sizeBytes, error });
+    // A new archive may be in the bucket. /api/status also re-checks it after any report (see
+    // resolveBackup's freshAfter); deleting the cached check here covers /api/backup in this location.
+    await clearBackupProbeCache(env);
 
     // Only "Backup now" results go to the activity log; the 30-minute runs would crowd it out
     // (and each entry is a KV write, which the free plan limits to 1,000 a day)
