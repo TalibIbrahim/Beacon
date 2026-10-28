@@ -26,6 +26,8 @@
 #   BACKUP_CMD        default ~/mc-backup.sh
 #   MC_HOST           Minecraft-Premium's private IP           default 10.0.0.16
 #   MC_PORT           Minecraft port                           default 25565
+#   RCON_PASSWORD     Minecraft RCON password (TPS, MSPT, full player list); empty: no RCON
+#   RCON_PORT         RCON port                                default 25575
 #
 # Output goes to ~/mc-backup/agent.log (trimmed to the last 200 KB past 1 MB) unless you run it
 # in a terminal. The token and upload URL are never printed or put on a command line.
@@ -35,7 +37,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${BEACON_AGENT_ENV:-$HOME/.config/beacon/agent.env}"
-ENV_KEYS=" BEACON_URL AGENT_TOKEN UPLOAD_URL PREMIUM_SSH MC_TMUX_SESSION MC_REMOTE_DIR BACKUP_ROOT BACKUP_CMD MC_HOST MC_PORT "
+ENV_KEYS=" BEACON_URL AGENT_TOKEN UPLOAD_URL PREMIUM_SSH MC_TMUX_SESSION MC_REMOTE_DIR BACKUP_ROOT BACKUP_CMD MC_HOST MC_PORT RCON_PASSWORD RCON_PORT "
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] agent: $*"; }
 
@@ -66,6 +68,8 @@ AGENT_TOKEN="${AGENT_TOKEN:-}"
 PREMIUM_SSH="${PREMIUM_SSH:-ubuntu@10.0.0.16}"
 MC_HOST="${MC_HOST:-10.0.0.16}"
 MC_PORT="${MC_PORT:-25565}"
+RCON_PASSWORD="${RCON_PASSWORD:-}"
+RCON_PORT="${RCON_PORT:-25575}"
 MC_TMUX_SESSION="${MC_TMUX_SESSION-mc}"
 MC_REMOTE_DIR="${MC_REMOTE_DIR:-/home/ubuntu/minecraft}"
 BACKUP_ROOT="${BACKUP_ROOT:-$HOME/mc-backup}"
@@ -135,15 +139,20 @@ last_success_iso() {
   fi
 }
 
-# Extra poll fields from scripts/mc-probe.py: Minecraft's status and who is online, probed over the
-# private IP. The probe prints one line of JSON (or null); Beacon validates it strictly anyway.
+# Extra poll fields from scripts/mc-probe.py: Minecraft's status, who is online and server health,
+# probed over the private IP (and RCON / SSH when set up). The probe prints one JSON object,
+# {"minecraft": ..., "health": ...}; its two fields are spliced into the heartbeat as they are, and
+# Beacon validates them strictly. The RCON password reaches Python through its environment only.
 probe_fields() {
   command -v python3 >/dev/null 2>&1 || return 0
   [ -f "$SCRIPT_DIR/mc-probe.py" ] || return 0
-  local mc
-  mc="$(timeout 15 python3 "$SCRIPT_DIR/mc-probe.py" ping --host "$MC_HOST" --port "$MC_PORT" 2>/dev/null | head -c 6000)"
-  [ -n "$mc" ] || mc=null
-  printf ',"minecraft":%s' "$mc"
+  local out
+  out="$(RCON_PASSWORD="$RCON_PASSWORD" timeout 40 python3 "$SCRIPT_DIR/mc-probe.py" status \
+           --host "$MC_HOST" --port "$MC_PORT" --rcon-port "$RCON_PORT" --ssh "$PREMIUM_SSH" 2>/dev/null | head -c 7000)"
+  case "$out" in
+    '{"minecraft":'*'}') printf ',%s' "${out:1:${#out}-2}" ;;
+    *) ;; # no usable output: send nothing rather than claim Minecraft is down
+  esac
 }
 
 heartbeat_json() {

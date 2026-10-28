@@ -100,19 +100,28 @@ fi
 
 PATHS=()
 for p in "$LEVEL_NAME" "${LEVEL_NAME}_nether" "${LEVEL_NAME}_the_end" \
-         server.properties whitelist.json ops.json banned-players.json banned-ips.json usercache.json; do
+         whitelist.json ops.json banned-players.json banned-ips.json usercache.json; do
   if [ -e "$p" ]; then PATHS+=("$p"); fi
 done
 
 TMP="$OUT_DIR/.$LATEST_NAME.tmp"
-trap 'rm -f "$TMP"' EXIT
+REDACTED_DIR="$(mktemp -d)"
+trap 'rm -f "$TMP"; rm -rf "$REDACTED_DIR"' EXIT
 
-log "Packing: ${PATHS[*]}"
+# server.properties goes in with rcon.password blanked: the archive is downloadable by everyone
+# who can sign in to Beacon (and by anyone holding the bucket link)
+EXTRA=()
+if [ -f server.properties ]; then
+  sed -E 's/^(rcon\.password=).*/\1/' server.properties > "$REDACTED_DIR/server.properties"
+  EXTRA=(-C "$REDACTED_DIR" server.properties)
+fi
+
+log "Packing: ${PATHS[*]}${EXTRA:+ server.properties (rcon.password blanked)}"
 # Exit status 1 from GNU tar only means "a file changed while being read"; anything higher is a real error
 set +e
 tar -czf "$TMP" --warning=no-file-changed \
     --exclude='*.log' --exclude='*.log.gz' --exclude='session.lock' \
-    "${PATHS[@]}"
+    "${PATHS[@]}" "${EXTRA[@]}"
 TAR_STATUS=$?
 set -e
 [ "$TAR_STATUS" -le 1 ] || fail "tar failed with status $TAR_STATUS"

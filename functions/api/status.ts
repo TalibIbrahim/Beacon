@@ -7,8 +7,26 @@ import { checkPowerCooldown } from '../_lib/ratelimit';
 import { ResolvedBackup, resolveBackup } from '../_lib/backup';
 import { getBackupJobInfo } from '../_lib/backupjob';
 import { getLeaderboard } from '../_lib/players';
-import { readSnapshot } from '../_lib/snapshot';
-import { BackupJobInfo, Env, LeaderboardEntry, MinecraftState, StatusResponse, VmState } from '../_lib/types';
+import { readSnapshot, StoredSnapshot } from '../_lib/snapshot';
+import { BackupJobInfo, Env, LeaderboardEntry, MinecraftState, ServerHealthInfo, StatusResponse, VmState } from '../_lib/types';
+
+const HEALTH_STALE_MS = 3 * 60 * 1000;
+
+function healthInfo(snap: StoredSnapshot | null): ServerHealthInfo | undefined {
+  if (!snap) return undefined;
+  const at = snap.healthAt ?? snap.seenAt;
+  const h = snap.health;
+  return {
+    minecraftOnline: snap.mcOnline,
+    stale: Date.now() - at > HEALTH_STALE_MS,
+    at: new Date(at).toISOString(),
+    tps: h?.tps ?? null,
+    mspt: h?.mspt ?? null,
+    rssBytes: h?.rssBytes ?? null,
+    uptimeSec: h?.uptimeSec ?? null,
+    memTotalBytes: h?.memTotalBytes ?? null,
+  };
+}
 
 const ONLINE_SINCE_KEY = 'online_since';
 
@@ -87,20 +105,28 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     // 6. Recent activity log and arm-free backups, then the world save: a backup reported after the
     //    bucket was last checked makes resolveBackup check it again, so "Saved" updates at once
     const db = env.DASH_DB;
-    const [recentLog, backupJob, leaderboard] = await Promise.all([
+    // One read of the agent's snapshot serves the leaderboard and the health card
+    const snapshot: Promise<StoredSnapshot | null> = db
+      ? readSnapshot(db).catch((err) => {
+          console.error('Snapshot read failed:', err instanceof Error ? err.message : err);
+          return null;
+        })
+      : Promise.resolve(null);
+    const [recentLog, backupJob, leaderboard, snap] = await Promise.all([
       getRecentActivityLog(env.DASH_KV, 20),
       getBackupJobInfo(env, { vmState, onlineSince }).catch((err): BackupJobInfo | undefined => {
         console.error('Backup job status failed:', err instanceof Error ? err.message : err);
         return undefined;
       }),
       db
-        ? readSnapshot(db)
-            .then((snap) => getLeaderboard(db, snap))
+        ? snapshot
+            .then((s) => getLeaderboard(db, s))
             .catch((err): LeaderboardEntry[] | undefined => {
               console.error('Leaderboard failed:', err instanceof Error ? err.message : err);
               return undefined;
             })
         : Promise.resolve(undefined),
+      snapshot,
     ]);
     const lastReportMs = backupJob?.lastRun ? new Date(backupJob.lastRun.finishedAt).getTime() : 0;
     const backup = await resolveBackup(env, async () => ({ vmState, publicIp }), lastReportMs).catch(
@@ -126,6 +152,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       backupInfo: backup.info,
       backupJob,
       leaderboard,
+      health: healthInfo(snap),
     };
 
     return new Response(JSON.stringify(response), {

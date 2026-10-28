@@ -77,7 +77,7 @@ fi
 
 PATHS=()
 for p in "$LEVEL_NAME" "${LEVEL_NAME}_nether" "${LEVEL_NAME}_the_end" \
-         server.properties whitelist.json ops.json banned-players.json banned-ips.json usercache.json; do
+         whitelist.json ops.json banned-players.json banned-ips.json usercache.json; do
   if [ -e "$p" ]; then PATHS+=("$p"); fi
 done
 
@@ -86,14 +86,23 @@ if [ ! -d "$LEVEL_NAME" ]; then
   exit 1
 fi
 
-log "Packing: ${PATHS[*]}"
+# server.properties goes in with rcon.password blanked: the archive is meant to be downloaded
+REDACTED_DIR="$(mktemp -d)"
+EXTRA=()
+if [ -f server.properties ]; then
+  sed -E 's/^(rcon\.password=).*/\1/' server.properties > "$REDACTED_DIR/server.properties"
+  EXTRA=(-C "$REDACTED_DIR" server.properties)
+fi
+
+log "Packing: ${PATHS[*]}${EXTRA:+ server.properties (rcon.password blanked)}"
 # Exit status 1 from GNU tar only means "a file changed while being read"; anything higher is a real error
 set +e
 tar -czf "$OUT_DIR/$DATED_NAME" --warning=no-file-changed \
     --exclude='*.log' --exclude='*.log.gz' --exclude='session.lock' \
-    "${PATHS[@]}"
+    "${PATHS[@]}" "${EXTRA[@]}"
 TAR_STATUS=$?
 set -e
+rm -rf "$REDACTED_DIR"
 if [ "$TAR_STATUS" -gt 1 ]; then
   echo "Error: tar failed with status $TAR_STATUS" >&2
   exit "$TAR_STATUS"

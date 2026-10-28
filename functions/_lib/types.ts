@@ -135,6 +135,20 @@ export interface StatusResponse {
   backupJob?: BackupJobInfo;
   // Top players by playtime (from arm-free's player lists); undefined until DASH_DB is bound
   leaderboard?: LeaderboardEntry[];
+  // undefined until DASH_DB is bound and the agent has reported at least once
+  health?: ServerHealthInfo;
+}
+
+// Server health from arm-free (RCON tps/mspt, java process stats over SSH)
+export interface ServerHealthInfo {
+  minecraftOnline: boolean | null; // as last probed from arm-free
+  stale: boolean; // no reading for more than 3 minutes
+  at: string | null; // time of the last reading
+  tps: number | null;
+  mspt: number | null;
+  rssBytes: number | null;
+  uptimeSec: number | null;
+  memTotalBytes: number | null;
 }
 
 export interface LeaderboardEntry {

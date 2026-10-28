@@ -349,6 +349,7 @@ them.
 | `MC_REMOTE_DIR` | `/home/ubuntu/minecraft` | Server folder on Minecraft-Premium (for `logs/latest.log`) |
 | `BACKUP_ROOT` / `BACKUP_CMD` | `~/mc-backup` / `~/mc-backup.sh` | Your existing backup folder and script |
 | `MC_HOST` / `MC_PORT` | `10.0.0.16` / `25565` | Where `mc-probe.py` pings Minecraft (the private IP, so it works without the public address) |
+| `RCON_PASSWORD` / `RCON_PORT` | none / `25575` | RCON for TPS, MSPT and the full player list (see [Set up RCON](#set-up-rcon-only-arm-free-may-reach-it)). Empty: no RCON |
 
 ### Set it up
 
@@ -420,6 +421,65 @@ last sighting is under 3 minutes old, and "last seen" otherwise. To start counti
 ```bash
 npx wrangler d1 execute beacon-agent --remote --command "DELETE FROM players"
 ```
+
+## Server health
+
+The **Server health** card shows ticks per second (TPS) with a band and a word, **Good** (19 and up),
+**Strained** (15 to 19) or **Lagging** (under 15); the tick time (MSPT); Minecraft's memory against the
+VM's total; how long Minecraft has been running; and how old the reading is. It greys out when the
+reading is more than 3 minutes old and says so when Minecraft is not answering.
+
+Every minute `mc-probe.py status` (called by `mc-agent.sh`) collects:
+
+| Value | From | Needs |
+|---|---|---|
+| Online, players, version | Server-list ping to `MC_HOST:MC_PORT` | nothing |
+| TPS, MSPT, every player name | RCON `tps`, `mspt`, `list` (colour codes stripped, parsed defensively; anything unreadable shows as "unavailable") | RCON, below |
+| Memory, uptime, VM memory | One fixed command over the existing SSH key: `ps -C java -o rss=,etimes=` and `MemTotal` from `/proc/meminfo`. Runs only when Minecraft answered | nothing new |
+
+### Set up RCON (only arm-free may reach it)
+
+RCON lets whoever has its password run any server command, so it must only be reachable from
+arm-free. On Minecraft-Premium it is currently off (`enable-rcon=false`, `rcon.port=25575`). Check
+before you change anything:
+
+```bash
+# On Minecraft-Premium (never print rcon.password)
+grep -E '^(enable-rcon|rcon\.port|broadcast-rcon-to-ops)=' /home/ubuntu/minecraft/server.properties
+sudo iptables -S INPUT | grep -E '25575|ACCEPT' ; sudo ss -ltnp | grep 25575
+# On arm-free: its private IP, for the rules below
+hostname -I
+```
+
+1. **Password, on arm-free.** `openssl rand -hex 24`, then add `RCON_PASSWORD=<it>` to
+   `~/.config/beacon/agent.env` (still `chmod 600`). It never goes anywhere else on arm-free, never on a
+   command line, and Beacon never sees it.
+2. **server.properties, on Minecraft-Premium.** Set
+   `enable-rcon=true`, `rcon.port=25575`, `rcon.password=<the same>` and
+   `broadcast-rcon-to-ops=false` (otherwise ops see every per-minute `tps` in chat). The world archive
+   that friends download carries a copy of `server.properties` with `rcon.password` blanked
+   (`pack-and-upload.sh` and `backup-world.sh` both do this).
+3. **OCI security list** of the subnet (Networking → Virtual cloud networks → your VCN → Security
+   Lists, or the NSG on Minecraft-Premium's VNIC if you use one): add an ingress rule, stateful,
+   source `<arm-free private IP>/32`, TCP, destination port `25575`. Make sure no other rule already
+   opens 25575 (or all ports) to `0.0.0.0/0`.
+4. **iptables on Minecraft-Premium** (Oracle's Ubuntu images reject everything not allowed):
+
+   ```bash
+   sudo iptables -I INPUT -p tcp -s <arm-free private IP> --dport 25575 -j ACCEPT
+   sudo netfilter-persistent save
+   ```
+
+5. Restart Minecraft (`sudo systemctl restart minecraft`, or Restart in Beacon), then test from arm-free
+   without putting the password on the command line:
+
+   ```bash
+   RCON_PASSWORD="$(grep '^RCON_PASSWORD=' ~/.config/beacon/agent.env | cut -d= -f2-)" \
+     python3 ~/beacon/mc-probe.py status --host 10.0.0.16 --ssh ubuntu@10.0.0.16
+   ```
+
+   and from anywhere else (your PC) that the port is closed:
+   `Test-NetConnection <premium public IP> -Port 25575` must say `TcpTestSucceeded : False`.
 
 ## Discord alerts
 
@@ -551,7 +611,7 @@ stop event and de-duplicate it with the dashboard's.
 | `POST /api/login` | public | `{ password, turnstileToken? }` → sets the session cookie |
 | `GET /api/config` | public | `{ turnstileSiteKey }` for the sign-in screen |
 | `GET /api/session` | session | 200 if the cookie is valid, 401 if not |
-| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity, `backupJob` (heartbeat, last backup, request state, cooldown, overdue) and `leaderboard` (top 10 by playtime) |
+| `GET /api/status` | session | VM and Minecraft state, players, address, usage, trial, world save, activity, `backupJob` (heartbeat, last backup, request state, cooldown, overdue) and `leaderboard` (top 10 by playtime) and `health` (TPS, MSPT, memory, uptime, age of the reading) |
 | `POST /api/power` | session | `{ action: "start" \| "stop" \| "restart", force? }`; 409 with `playerCount` if people are online |
 | `GET /api/backup` | session | Where the world save is and whether it can be downloaded |
 | `GET /api/backup?download=1` | session | The download (stream from R2, or a redirect) |
