@@ -42,7 +42,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const [vmState, publicIp] = await Promise.all([getOciInstanceLifecycleState(env), getOciPublicIp(env)]);
     let playersOnline = 0;
     if (publicIp && vmState === 'RUNNING') {
-      const mc = await getMinecraftStatus(env.DASH_KV, publicIp);
+      const mc = await getMinecraftStatus(publicIp, { fresh: true });
       if (mc.online) playersOnline = mc.players.online;
     }
 

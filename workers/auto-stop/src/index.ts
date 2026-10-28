@@ -60,7 +60,7 @@ async function handleAutoStopCheck(env: AutoStopEnv): Promise<string> {
   }
 
   // 3. Query Minecraft status
-  const mcStatus = await getMinecraftStatus(env.DASH_KV, publicIp);
+  const mcStatus = await getMinecraftStatus(publicIp, { fresh: true });
 
   // If players are online, reset empty_since timer
   if (mcStatus.online && mcStatus.players.online > 0) {

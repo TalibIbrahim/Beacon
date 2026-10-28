@@ -134,7 +134,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if ((action === 'stop' || action === 'restart') && !force) {
     const publicIp = await getOciPublicIp(env);
     if (publicIp) {
-      const mcStatus = await getMinecraftStatus(env.DASH_KV, publicIp);
+      const mcStatus = await getMinecraftStatus(publicIp, { fresh: true });
       if (mcStatus.online && mcStatus.players.online > 0) {
         return new Response(
           JSON.stringify({

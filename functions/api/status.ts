@@ -61,7 +61,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     let motd = 'Unknown';
 
     if (publicIp && (vmState === 'RUNNING' || vmState === 'STARTING')) {
-      const mcData = await getMinecraftStatus(env.DASH_KV, publicIp);
+      const mcData = await getMinecraftStatus(publicIp);
       mcOnline = mcData.online;
       players = mcData.players;
       version = mcData.version;

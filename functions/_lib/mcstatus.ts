@@ -1,4 +1,6 @@
-// Minecraft status lookup via mcsrvstat.us v3 with KV caching
+// Minecraft status lookup via mcsrvstat.us v3 with a short in-memory cache.
+// Not KV: the dashboard polls every 10s, and KV's minimum TTL (60s) plus its 1,000 writes/day free
+// limit would both be hit. The cache lives per isolate, so it only absorbs bursts.
 
 export interface MinecraftStatusResult {
   online: boolean;
@@ -12,23 +14,18 @@ export interface MinecraftStatusResult {
   rawError?: boolean;
 }
 
-const CACHE_TTL_SECONDS = 10;
+const CACHE_TTL_MS = 10_000;
 const USER_AGENT = 'ServerControl/1.0';
 
-export async function getMinecraftStatus(
-  kv: KVNamespace,
-  ip: string
-): Promise<MinecraftStatusResult> {
-  const cacheKey = `mcstatus_cache:${ip}`;
+let cached: { ip: string; at: number; result: MinecraftStatusResult } | null = null;
 
-  // Check KV cache first
-  try {
-    const cached = await kv.get<MinecraftStatusResult>(cacheKey, 'json');
-    if (cached) {
-      return cached;
-    }
-  } catch (err) {
-    console.error('Error reading mcstatus KV cache:', err);
+// `fresh` skips the cache: used where the answer gates an action (stopping or restoring with players on)
+export async function getMinecraftStatus(
+  ip: string,
+  options: { fresh?: boolean } = {}
+): Promise<MinecraftStatusResult> {
+  if (!options.fresh && cached && cached.ip === ip && Date.now() - cached.at < CACHE_TTL_MS) {
+    return cached.result;
   }
 
   // Fallback default if fetch fails
@@ -95,12 +92,8 @@ export async function getMinecraftStatus(
       rawError: false,
     };
 
-    // Cache in KV for 10 seconds
-    try {
-      await kv.put(cacheKey, JSON.stringify(result), { expirationTtl: CACHE_TTL_SECONDS });
-    } catch (cacheErr) {
-      console.error('Failed to set mcstatus KV cache:', cacheErr);
-    }
+    // Only successful lookups are cached; a failed one is retried on the next call
+    cached = { ip, at: Date.now(), result };
 
     return result;
   } catch (err) {
