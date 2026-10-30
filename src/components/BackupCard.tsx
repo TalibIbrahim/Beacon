@@ -2,10 +2,12 @@ import React from 'react';
 import { ChevronDown, Download } from 'lucide-react';
 import { BACKUP_DOWNLOAD_URL } from '../api';
 import { formatBytes, formatDate, formatRelative } from '../format';
-import { BackupInfo, BackupSource } from '../types';
+import { BackupInfo, BackupJobInfo, BackupSource } from '../types';
 
 interface BackupCardProps {
   backupInfo?: BackupInfo;
+  // The agent's last run: when packing stopped, the download is still the previous save
+  lastRun?: BackupJobInfo['lastRun'];
   onToast: (type: 'success' | 'error' | 'info', message: string) => void;
 }
 
@@ -22,24 +24,23 @@ const CodeBlock: React.FC<{ children: string }> = ({ children }) => (
   </pre>
 );
 
-export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) => {
+// mc-agent.sh starts the error with this when pack-and-upload.sh refused or failed to build the zip
+const PACK_FAILED_PREFIX = 'World download not updated';
+
+export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, lastRun, onToast }) => {
   const info: BackupInfo = backupInfo ?? { available: false, source: 'none' };
   const isVm = info.source === 'vm';
+  const isZip = (info.filename ?? '').endsWith('.zip');
+  const extension = isZip ? '.zip' : '.tar.gz';
   const size = formatBytes(info.sizeBytes);
+  // The world's own save time (level.dat) when the zip carries it, otherwise when the file was uploaded
+  const savedAt = info.savedAt ?? info.lastModified;
+  const packError = lastRun && !lastRun.ok && lastRun.error?.startsWith(PACK_FAILED_PREFIX) ? lastRun.error : null;
 
   const rows: Array<[string, React.ReactNode]> = [
-    ['Archive', 'world-latest.tar.gz'],
+    ['Archive', <span title={info.filename}>{info.filename ?? `world-latest${extension}`}</span>],
+    ...(info.worldName ? [['World', info.worldName] as [string, React.ReactNode]] : []),
     ['Size', size ? <span className="num">{size}</span> : <span className="text-faint">—</span>],
-    [
-      'Saved',
-      info.lastModified ? (
-        <span className="num">
-          {formatRelative(info.lastModified)} <span className="text-faint">· {formatDate(info.lastModified)}</span>
-        </span>
-      ) : (
-        <span className="text-faint">—</span>
-      ),
-    ],
   ];
 
   return (
@@ -63,25 +64,40 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
           ))}
         </dl>
 
-        {info.available ? (
-          <a
-            href={BACKUP_DOWNLOAD_URL}
-            // R2 and Object Storage answer as a file download, so the dashboard stays put.
-            // The VM link is plain HTTP and may be down, so it gets its own tab.
-            {...(isVm ? { target: '_blank', rel: 'noopener noreferrer' } : { download: '' })}
-            onClick={() => onToast('info', 'Download started. Check your browser’s downloads.')}
-            className="btn-secondary"
-          >
-            <Download className="w-4 h-4" aria-hidden="true" />
-            Download .tar.gz
-          </a>
-        ) : (
-          <button type="button" className="btn-secondary" disabled>
-            <Download className="w-4 h-4" aria-hidden="true" />
-            Download .tar.gz
-          </button>
-        )}
+        <div className="flex flex-col gap-1.5 sm:items-end">
+          {info.available ? (
+            <a
+              href={BACKUP_DOWNLOAD_URL}
+              // R2 and Object Storage answer as a file download, so the dashboard stays put.
+              // The VM link is plain HTTP and may be down, so it gets its own tab.
+              {...(isVm ? { target: '_blank', rel: 'noopener noreferrer' } : { download: '' })}
+              onClick={() => onToast('info', 'Download started. Check your browser’s downloads.')}
+              className="btn-secondary"
+            >
+              <Download className="w-4 h-4" aria-hidden="true" />
+              Download {extension}
+            </a>
+          ) : (
+            <button type="button" className="btn-secondary" disabled>
+              <Download className="w-4 h-4" aria-hidden="true" />
+              Download {extension}
+            </button>
+          )}
+          {info.available && savedAt && (
+            <span className="num text-[13px] text-muted sm:text-right" title={savedAt}>
+              {info.savedAt ? 'World saved' : 'Uploaded'} {formatRelative(savedAt)}{' '}
+              <span className="text-faint">· {formatDate(savedAt)}</span>
+            </span>
+          )}
+        </div>
       </div>
+
+      {packError && (
+        <p className="mx-5 mb-4 -mt-1 px-3.5 py-3 rounded-lg border-2 border-edge bg-pill-negative text-negative break-words">
+          {packError}
+          {info.available && savedAt ? ` The download is still the save from ${formatDate(savedAt)}.` : ''}
+        </p>
+      )}
 
       {(info.message && !info.available) || isVm ? (
         <p className="mx-5 mb-5 -mt-1 text-muted">
@@ -94,7 +110,7 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
       <div className="border-t-2 border-rule">
         <details className="group px-5">
           <summary className="flex items-center justify-between min-h-[48px] cursor-pointer text-muted hover:text-ink list-none [&::-webkit-details-marker]:hidden">
-            <span>{info.available ? 'Restore on a new server' : 'How to set up world backups'}</span>
+            <span>{!info.available ? 'How to set up world backups' : isZip ? 'Play it in singleplayer' : 'Restore on a new server'}</span>
             <ChevronDown className="w-4 h-4 text-muted group-open:rotate-180 transition-transform" aria-hidden="true" />
           </summary>
           <div className="pb-5 space-y-4 text-muted">
@@ -107,10 +123,28 @@ export const BackupCard: React.FC<BackupCardProps> = ({ backupInfo, onToast }) =
                 <CodeBlock>{`~/beacon/pack-and-upload.sh --force`}</CodeBlock>
               </div>
             )}
-            <div>
-              <p>Unpack the downloaded save into the new server's folder, then start it:</p>
-              <CodeBlock>{`tar -xzf minecraft-world-*.tar.gz -C /home/ubuntu/minecraft`}</CodeBlock>
-            </div>
+            {isZip ? (
+              <>
+                <div>
+                  <p>
+                    Extract the zip into your Minecraft <code className="text-ink">saves</code> folder. It holds one
+                    world folder, which then shows up in the Singleplayer list:
+                  </p>
+                  <CodeBlock>{`Windows   %APPDATA%\\.minecraft\\saves
+macOS     ~/Library/Application Support/minecraft/saves
+Linux     ~/.minecraft/saves`}</CodeBlock>
+                </div>
+                <p>
+                  To run it on a server instead, put the folder next to the server jar and set{' '}
+                  <code className="text-ink">level-name</code> in server.properties to its name.
+                </p>
+              </>
+            ) : (
+              <div>
+                <p>Unpack the downloaded save into the new server's folder, then start it:</p>
+                <CodeBlock>{`tar -xzf minecraft-world-*.tar.gz -C /home/ubuntu/minecraft`}</CodeBlock>
+              </div>
+            )}
             <p className="text-faint">The full steps are in the README under “World saves”.</p>
           </div>
         </details>

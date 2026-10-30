@@ -60,6 +60,9 @@ export interface BackupInfo {
   // false when the archive could not be checked (the VM source)
   verified?: boolean;
   filename?: string;
+  // The world inside and when it was saved (its level.dat time); arm-free's zip only
+  worldName?: string;
+  savedAt?: string;
   sizeBytes?: number;
   lastModified?: string;
   message?: string;

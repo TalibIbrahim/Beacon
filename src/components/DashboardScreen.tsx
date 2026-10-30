@@ -323,7 +323,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) =>
                 <HealthCard health={status.health} />
               </div>
               <div className="order-5 lg:order-none">
-                <BackupCard backupInfo={status.backupInfo} onToast={addToast} />
+                <BackupCard backupInfo={status.backupInfo} lastRun={status.backupJob?.lastRun} onToast={addToast} />
               </div>
               <div className="order-6 lg:order-none">
                 <BackupsCard job={status.backupJob} onRequested={fetchStatus} onToast={addToast} />

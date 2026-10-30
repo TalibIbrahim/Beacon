@@ -4,10 +4,14 @@
 //   1. R2 bucket binding BACKUP_BUCKET  -> streamed through this Function (HTTPS, behind the login)
 //   2. BACKUP_URL (e.g. Oracle Object Storage pre-authenticated request) -> 302 redirect
 //   3. The VM itself on port 8080 (scripts/serve-backup.sh) -> 302 redirect, only while the VM is RUNNING
+//
+// BACKUP_URL holds arm-free's singleplayer-ready zip (scripts/pack-and-upload.sh). R2 and the VM
+// still get the older server archive from scripts/backup-world.sh.
 
 import { BackupInfo, Env, VmState } from './types';
 
-export const BACKUP_OBJECT = 'world-latest.tar.gz';
+export const BACKUP_OBJECT = 'world-latest.zip';
+export const LEGACY_BACKUP_OBJECT = 'world-latest.tar.gz';
 
 const PROBE_CACHE_KEY = 'backup_probe';
 const PROBE_CACHE_TTL_SECONDS = 60;
@@ -28,11 +32,27 @@ interface ProbeResult {
   ok: boolean;
   sizeBytes?: number;
   lastModified?: string;
+  // From the Content-Disposition that pack-and-upload.sh stores with the object
+  filename?: string;
+  worldName?: string;
+  savedAt?: string;
 }
 
 interface CachedProbe extends ProbeResult {
   url: string;
   checkedAt?: number; // epoch ms
+}
+
+// pack-and-upload.sh names the download world-<level-name>-<level.dat time, UTC>.zip,
+// e.g. world-survival-2026-10-29T19-30-12Z.zip. Level names are checked the same way there.
+const DOWNLOAD_NAME = /^world-([A-Za-z0-9][A-Za-z0-9._ -]{0,63})-(\d{4}-\d{2}-\d{2})T(\d{2})-(\d{2})-(\d{2})Z\.zip$/;
+
+function parseDownloadName(disposition: string | null): Pick<ProbeResult, 'filename' | 'worldName' | 'savedAt'> {
+  const filename = disposition?.match(/filename="([^"]{1,200})"/)?.[1];
+  const m = filename?.match(DOWNLOAD_NAME);
+  if (!filename || !m) return {};
+  const savedAt = new Date(`${m[2]}T${m[3]}:${m[4]}:${m[5]}Z`);
+  return isNaN(savedAt.getTime()) ? {} : { filename, worldName: m[1], savedAt: savedAt.toISOString() };
 }
 
 export function getBackupUrl(env: Env): string | null {
@@ -43,7 +63,7 @@ export function getBackupUrl(env: Env): string | null {
 
 export function getVmBackupUrl(env: Env, publicIp: string): string {
   const token = env.VM_BACKUP_TOKEN?.trim();
-  const path = token ? `/${encodeURIComponent(token)}/${BACKUP_OBJECT}` : `/${BACKUP_OBJECT}`;
+  const path = token ? `/${encodeURIComponent(token)}/${LEGACY_BACKUP_OBJECT}` : `/${LEGACY_BACKUP_OBJECT}`;
   return `http://${publicIp}:8080${path}`;
 }
 
@@ -60,6 +80,7 @@ async function probeUrl(url: string): Promise<ProbeResult> {
         ok: true,
         sizeBytes: len ? parseInt(len, 10) : undefined,
         lastModified: head.headers.get('last-modified') || undefined,
+        ...parseDownloadName(head.headers.get('content-disposition')),
       };
     }
     if (head.status === 404) return { ok: false };
@@ -76,7 +97,12 @@ async function probeUrl(url: string): Promise<ProbeResult> {
       const total = range?.split('/')[1];
       const len = ranged.headers.get('content-length');
       const sizeBytes = total && total !== '*' ? parseInt(total, 10) : ranged.status === 200 && len ? parseInt(len, 10) : undefined;
-      return { ok: true, sizeBytes, lastModified: ranged.headers.get('last-modified') || undefined };
+      return {
+        ok: true,
+        sizeBytes,
+        lastModified: ranged.headers.get('last-modified') || undefined,
+        ...parseDownloadName(ranged.headers.get('content-disposition')),
+      };
     }
     return { ok: false };
   } finally {
@@ -129,13 +155,13 @@ export async function resolveBackup(
 ): Promise<ResolvedBackup> {
   // 1. Cloudflare R2
   if (env.BACKUP_BUCKET) {
-    const obj = await env.BACKUP_BUCKET.head(BACKUP_OBJECT);
+    const obj = await env.BACKUP_BUCKET.head(LEGACY_BACKUP_OBJECT);
     if (!obj) {
       return {
         info: {
           available: false,
           source: 'r2',
-          message: `R2 bucket is connected, but ${BACKUP_OBJECT} has not been uploaded yet. Run scripts/backup-world.sh on the VM.`,
+          message: `R2 bucket is connected, but ${LEGACY_BACKUP_OBJECT} has not been uploaded yet. Run scripts/backup-world.sh on the VM.`,
         },
       };
     }
@@ -144,7 +170,7 @@ export async function resolveBackup(
         available: true,
         source: 'r2',
         verified: true,
-        filename: BACKUP_OBJECT,
+        filename: LEGACY_BACKUP_OBJECT,
         sizeBytes: obj.size,
         lastModified: obj.uploaded.toISOString(),
         message: 'Stored in Cloudflare R2',
@@ -179,7 +205,9 @@ export async function resolveBackup(
         available: true,
         source: 'url',
         verified: true,
-        filename: BACKUP_OBJECT,
+        filename: probe.filename ?? BACKUP_OBJECT,
+        worldName: probe.worldName,
+        savedAt: probe.savedAt,
         sizeBytes: probe.sizeBytes,
         lastModified: probe.lastModified,
         message: 'Stored in Oracle Object Storage',
@@ -197,7 +225,7 @@ export async function resolveBackup(
         available: true,
         source: 'vm',
         verified: false,
-        filename: BACKUP_OBJECT,
+        filename: LEGACY_BACKUP_OBJECT,
         message: 'Served from the VM on port 8080 while scripts/serve-backup.sh is running.',
       },
       redirectUrl: getVmBackupUrl(env, publicIp),

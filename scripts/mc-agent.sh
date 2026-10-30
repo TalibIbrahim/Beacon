@@ -12,8 +12,8 @@
 #
 # A backup is: (optionally) pause autosave on Minecraft-Premium and flush the world, run
 # ~/mc-backup.sh (the rsync pull), turn autosave back on, then pack-and-upload.sh so the
-# dashboard's download has the new copy. Every backup holds an flock on ~/mc-backup/.lock, so
-# runs never overlap.
+# dashboard's download has the new copy (a singleplayer-ready world-latest.zip). Every backup
+# holds an flock on ~/mc-backup/.lock, so runs never overlap.
 #
 # Config: ~/.config/beacon/agent.env (chmod 600), KEY=value lines, see scripts/mc-agent-env.example
 #   BEACON_URL        https://<your dashboard>
@@ -78,7 +78,7 @@ export BACKUP_ROOT
 
 LOCK_FILE="$BACKUP_ROOT/.lock"
 LAST_SUCCESS_FILE="$BACKUP_ROOT/.last_success"
-ARCHIVE="$BACKUP_ROOT/upload/world-latest.tar.gz"
+ARCHIVE="$BACKUP_ROOT/upload/world-latest.zip"
 LOG_FILE="$BACKUP_ROOT/agent.log"
 # How long a requested backup waits for a scheduled one that is already running
 LOCK_WAIT=1800
@@ -304,11 +304,16 @@ run_backup() {
     fi
   fi
 
-  # Keep the download fresh: uploads only when there is a backup newer than the last upload
-  "$SCRIPT_DIR/pack-and-upload.sh"
+  # Keep the download fresh: uploads only when there is a backup newer than the last upload.
+  # When packing stops (e.g. the world is incomplete), its reason goes to Beacon as it is; the
+  # dashboard's World save card looks for the "World download not updated" prefix.
+  local pack_out reason
+  pack_out="$("$SCRIPT_DIR/pack-and-upload.sh" 2>&1)"
   prc=$?
+  [ -z "$pack_out" ] || printf '%s\n' "$pack_out"
   if [ "$prc" -ne 0 ] && [ "$prc" -ne 3 ]; then
-    error="${error:+$error }Packing or uploading failed (exit $prc)."
+    reason="$(printf '%s\n' "$pack_out" | sed -n 's/^.*pack: Error: //p' | tail -n 1)"
+    error="World download not updated: ${reason:-packing or uploading failed (exit $prc)}.${error:+ $error}"
   fi
 
   if [ -n "$error" ]; then

@@ -18,8 +18,9 @@ The screenshots use made-up data (a documentation IP address and invented player
 - **Start, stop, restart** the Oracle VM. A 30-second cooldown stops double clicks, and stopping or
   restarting while people are online asks you to type `STOP` / `RESTART` first.
 - **Players online**, from the public [mcsrvstat.us](https://mcsrvstat.us) API.
-- **World save download** (`.tar.gz`) from Cloudflare R2, Oracle Object Storage, or straight from the
-  VM. It works while the VM is off when the save lives in a bucket. See [World saves](#world-saves).
+- **World save download**: from Oracle Object Storage a ready-to-play singleplayer `.zip` (extract it
+  into `.minecraft/saves`), from Cloudflare R2 or straight from the VM a server `.tar.gz`. It works
+  while the VM is off when the save lives in a bucket. See [World saves](#world-saves).
 - **Backups from arm-free**: an always-on ARM VM copies the server every 30 minutes and uploads the
   save. The dashboard shows whether its cron job is alive and when the last backup ran, and has a
   **Backup now** button. See [Backups from arm-free](#backups-from-arm-free).
@@ -41,7 +42,7 @@ The screenshots use made-up data (a documentation IP address and invented player
                         ├──▶ Oracle Cloud API (signed): VM state, power, public IP
                         ├──▶ mcsrvstat.us: public Minecraft status and players
                         ├──▶ Discord webhook (waitUntil, de-duplicated, ≤5 posts/min)
-                        └──▶ Object Storage read link: world-latest.tar.gz (download redirect)
+                        └──▶ Object Storage read link: world-latest.zip (download redirect)
 
  Worker "beacon-auto-stop" (cron, 10 min) ──▶ Oracle soft stop when idle; same KV + D1; Discord
 
@@ -53,7 +54,7 @@ The screenshots use made-up data (a documentation IP address and invented player
    │                                       ──▶ SSH: ps rss/etimes, MemTotal
    cron ─ mc-agent.sh scheduled (30 min), or a claimed "Backup now"   [flock ~/mc-backup/.lock]
    │        SSH tmux save-off/flush ─ ~/mc-backup.sh rsync pull ─ save-on
-   │        pack-and-upload.sh ── PUT write link ──▶ Oracle Object Storage (world-latest.tar.gz)
+   │        pack-and-upload.sh ── PUT write link ──▶ Oracle Object Storage (world-latest.zip)
    └─ a claimed restore ─ mc-restore.sh                              [same lock]
             name checked against ~/mc-backup/daily ─ sudo -n systemctl stop minecraft (SSH)
             ─ current world → ~/mc-pre-restore/<time> ─ rsync snapshot in ─ Minecraft stays stopped
@@ -157,9 +158,11 @@ Allow group beacon to read virtual-network-family in compartment <name>
 
 ## World saves
 
-The **Download .tar.gz** button gives you `world-latest.tar.gz`: the world folder (with its nether and
+What the **Download** button gives you depends on the source. From Oracle Object Storage it is arm-free's
+singleplayer zip, `world-<world>-<time>.zip` (see [What goes into the archive](#what-goes-into-the-archive)).
+From R2 or the VM it is `backup-world.sh`'s `world-latest.tar.gz`: the world folder (with its nether and
 end folders on Paper/Spigot), `server.properties`, `whitelist.json`, `ops.json`, the ban lists and
-`usercache.json`. Beacon looks for it in this order and uses the first that is configured:
+`usercache.json`. Beacon looks for a save in this order and uses the first that is configured:
 
 | Source | Set up with | Works while the VM is off | How the download travels |
 |---|---|---|---|
@@ -167,7 +170,8 @@ end folders on Paper/Spigot), `server.properties`, `whitelist.json`, `ops.json`,
 | **Oracle Object Storage** | `BACKUP_URL` | yes | Redirect to the pre-authenticated HTTPS link |
 | **Direct from the VM** | nothing (fallback) | no | Redirect to `http://<vm-ip>:8080/...` while `serve-backup.sh` runs |
 
-The dashboard shows which source is in use, the archive's size and when it was saved. It only enables
+The dashboard shows which source is in use, the archive's size and, next to the button, when it was
+saved (for the zip, the world's own `level.dat` time). It only enables
 the button when Beacon can see the file (the VM fallback cannot be checked from Cloudflare; see below).
 
 ### 1. Pack and upload from the VM
@@ -231,7 +235,7 @@ R2 has a free allowance of 10 GB with no egress fees, and the download stays beh
 1. Create a private bucket in the same region as the VM.
 2. On the bucket, create a **pre-authenticated request** for the whole bucket. Give it a long expiry.
    Copy the URL; it ends in `/o/`.
-3. Set that URL as `BACKUP_URL` in Beacon (Beacon appends `world-latest.tar.gz`), and as `UPLOAD_URL`
+3. Set that URL as `BACKUP_URL` in Beacon (Beacon appends `world-latest.zip`), and as `UPLOAD_URL`
    on the VM. A link that permits reads and writes works for both; for tighter access, give Beacon a
    read-only link and the VM a write-only one.
 
@@ -276,8 +280,9 @@ each success in `~/mc-backup/.last_success`). Two scripts in `scripts/` connect 
 - **`mc-agent.sh`** runs from cron. `poll` (every minute) sends a heartbeat and runs a backup when
   someone pressed **Backup now**; `scheduled` (every 30 minutes) is the regular backup and replaces
   calling `~/mc-backup.sh` from cron directly.
-- **`pack-and-upload.sh`** turns `~/mc-backup/latest` into `world-latest.tar.gz` and uploads it to
-  Oracle Object Storage, so the dashboard's **Download .tar.gz** works while both VMs are off. It
+- **`pack-and-upload.sh`** turns the active world in `~/mc-backup/latest` into a singleplayer-ready
+  `world-latest.zip` and uploads it to Oracle Object Storage, so the dashboard's **Download .zip**
+  works while both VMs are off. It
   runs after every backup and skips the upload when nothing changed since the last one.
 
 ### How a backup flows
@@ -293,7 +298,7 @@ each success in `~/mc-backup/.last_success`). Two scripts in `scripts/` connect 
    ├─ ssh ubuntu@10.0.0.16  tmux "mc": save-off, save-all flush, wait for "Saved the game" (≤30 s)
    ├─ ~/mc-backup.sh        rsync Minecraft-Premium → ~/mc-backup/latest
    ├─ ssh ubuntu@10.0.0.16  tmux "mc": save-on       (always, from a trap, even if the copy fails)
-   ├─ pack-and-upload.sh    world-latest.tar.gz ── PUT (write link) ──▶ Oracle Object Storage
+   ├─ pack-and-upload.sh    world-latest.zip ── PUT (write link) ──▶ Oracle Object Storage
    └─ POST /api/agent/report { ok, finishedAt, sizeBytes, error? } ──▶ D1: done / failed
 
  Browser ── Download ──▶ GET /api/backup?download=1 ── 302 to the read link ──▶ Oracle Object Storage
@@ -321,11 +326,28 @@ off or unreachable" and the download keeps the last backup. Scheduled runs while
 
 ### What goes into the archive
 
-The same selection as `backup-world.sh`, taken from `~/mc-backup/latest`: the world named by
-`level-name` in `server.properties` (`FINAL_FINAL_PAKKA_FINAL`) with its `_nether` and `_the_end`
-folders, `server.properties`, `whitelist.json`, `ops.json`, `banned-players.json`, `banned-ips.json`
-and `usercache.json`. Logs, `session.lock` and the other world folders are left out. The archive is
-checked with `gzip -t` before it is uploaded.
+A singleplayer world: extract the zip into `.minecraft/saves` and it is in the world list, with no
+fixes by hand. The only top-level entry is the active world, the folder named by `level-name` in the
+backed-up `server.properties` (`FINAL_FINAL_PAKKA_FINAL`); all three dimensions live inside it, under
+`dimensions/minecraft/`. Nothing else from the server folder goes in. `~/mc-backup/latest` is never
+written to. `pack-and-upload.sh`:
+
+1. Stages a hardlink copy (`cp -al`) of the world in `~/mc-backup/.stage.*`, and drops `session.lock`.
+2. Copies `dimensions/minecraft/overworld/data/minecraft/world_gen_settings.dat` to
+   `data/minecraft/` in the world root: Paper keeps it only in the dimension folder, while vanilla and
+   Fabric clients look for it in the root.
+3. Checks for a non-empty `level.dat`, `data/minecraft/world_gen_settings.dat` and at least one `.mca`
+   in `dimensions/minecraft/overworld/region`. If any is missing, nothing is uploaded, the download
+   keeps the previous save, and the run fails with the missing items named, e.g. *World download not
+   updated: FINAL_FINAL_PAKKA_FINAL is incomplete, missing world_gen_settings.dat*. The World save
+   card and the Backups panel both show it.
+4. Zips it with Python's `zipfile` (arm-free has no `zip`), tests every entry's CRC, and lists the zip
+   to confirm the single top-level folder and `<world>/data/minecraft/world_gen_settings.dat`.
+
+The object is always `world-latest.zip`, uploaded with
+`Content-Disposition: attachment; filename="world-<world>-<level.dat time, UTC>.zip"`
+(e.g. `world-FINAL_FINAL_PAKKA_FINAL-2026-10-29T19-30-12Z.zip`), so that is the name the browser
+saves. Beacon reads the world name and time from the same header.
 
 ### Saving before the copy
 
@@ -346,7 +368,7 @@ sends `save-on` again. To do it by hand on Minecraft-Premium: `tmux send-keys -t
 | `~/beacon/mc-agent.sh`, `pack-and-upload.sh`, `mc-probe.py`, `mc-restore.sh` | The agent's scripts (`chmod 700`), all in one folder |
 | `~/.config/beacon/agent.env` | `BEACON_URL`, `AGENT_TOKEN`, `UPLOAD_URL` (`chmod 600`; the scripts refuse to run otherwise). See `scripts/mc-agent-env.example` |
 | `~/mc-backup/.lock` | flock shared by every backup |
-| `~/mc-backup/upload/world-latest.tar.gz` | The last archive built, plus `.uploaded_stamp`, the backup it came from |
+| `~/mc-backup/upload/world-latest.zip` | The last archive built, plus `.uploaded_stamp`, the backup it came from |
 | `~/mc-backup/agent.log` | What the agent did (trimmed past 1 MB). Polls only log problems |
 
 The env file holds `KEY=value` lines and is parsed, never executed. The token and the upload link are
@@ -471,9 +493,9 @@ hostname -I
    command line, and Beacon never sees it.
 2. **server.properties, on Minecraft-Premium.** Set
    `enable-rcon=true`, `rcon.port=25575`, `rcon.password=<the same>` and
-   `broadcast-rcon-to-ops=false` (otherwise ops see every per-minute `tps` in chat). The world archive
-   that friends download carries a copy of `server.properties` with `rcon.password` blanked
-   (`pack-and-upload.sh` and `backup-world.sh` both do this).
+   `broadcast-rcon-to-ops=false` (otherwise ops see every per-minute `tps` in chat). arm-free's zip
+   holds only the world folder; `backup-world.sh`'s archive carries `server.properties` with
+   `rcon.password` blanked.
 3. **OCI security list** of the subnet (Networking → Virtual cloud networks → your VCN → Security
    Lists, or the NSG on Minecraft-Premium's VNIC if you use one): add an ingress rule, stateful,
    source `<arm-free private IP>/32`, TCP, destination port `25575`. Make sure no other rule already
@@ -650,8 +672,8 @@ stop event and de-duplicate it with the dashboard's.
   script. Power actions and auto-stop are blocked while a restore runs. On Minecraft-Premium, sudo
   is needed only for `systemctl stop|start minecraft` (`scripts/beacon-minecraft.sudoers`).
 - **RCON** is reachable from arm-free's private IP only (OCI ingress rule plus iptables), its password
-  lives only in arm-free's `chmod 600` env file and `server.properties`, and the downloadable archive
-  carries `server.properties` with `rcon.password` blanked.
+  lives only in arm-free's `chmod 600` env file and `server.properties`. arm-free's zip leaves
+  `server.properties` out, and `backup-world.sh`'s archive carries it with `rcon.password` blanked.
 - **Discord** messages carry no IP hashes or tokens; player names are escaped and mentions disabled.
   The webhook URL is a Worker secret and is never logged.
 - **Agent data** is validated strictly: unknown fields, wrong types and oversized lists are rejected.

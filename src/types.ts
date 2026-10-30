@@ -33,6 +33,8 @@ export interface BackupInfo {
   source: BackupSource;
   verified?: boolean;
   filename?: string;
+  worldName?: string;
+  savedAt?: string; // level.dat time of the world in the download
   sizeBytes?: number;
   lastModified?: string;
   message?: string;

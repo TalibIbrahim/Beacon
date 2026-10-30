@@ -1,8 +1,10 @@
 // GET /api/backup              - Where the world save is and whether it can be downloaded
 // GET /api/backup?download=1   - Download it (streamed from R2, or redirected to the bucket link / VM)
+//
+// The Object Storage zip names itself: pack-and-upload.sh stores its Content-Disposition with it.
 
 import { getMaskedActor } from '../_lib/auth';
-import { BACKUP_OBJECT, resolveBackup } from '../_lib/backup';
+import { LEGACY_BACKUP_OBJECT, resolveBackup } from '../_lib/backup';
 import { addActivityLog } from '../_lib/log';
 import { getOciInstanceLifecycleState, getOciPublicIp } from '../_lib/oci';
 import { Env } from '../_lib/types';
@@ -59,7 +61,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
     // R2: stream the object through this Function so the download stays on HTTPS and behind the login
     if (info.source === 'r2' && env.BACKUP_BUCKET) {
-      const obj = await env.BACKUP_BUCKET.get(BACKUP_OBJECT);
+      const obj = await env.BACKUP_BUCKET.get(LEGACY_BACKUP_OBJECT);
       if (!obj) {
         return json({ error: 'The world save disappeared from the bucket. Try again in a moment.' }, 404);
       }
